@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,41 +18,103 @@
   </div>
 
   {% else %}
+
+  <!-- Top summary cards -->
   <section class="stats-grid">
     <div class="stat-card accent">
-      <span class="stat-label">Total km</span>
+      <span class="stat-label">Celkem km</span>
       <span class="stat-value">{{ stats.total }}</span>
     </div>
     <div class="stat-card">
-      <span class="stat-label">This year</span>
+      <span class="stat-label">Tento rok</span>
       <span class="stat-value">{{ stats.this_year }}</span>
     </div>
     <div class="stat-card">
-      <span class="stat-label">This month</span>
+      <span class="stat-label">Tento měsíc</span>
       <span class="stat-value">{{ stats.this_month }}</span>
     </div>
     <div class="stat-card">
-      <span class="stat-label">This week</span>
+      <span class="stat-label">Tento týden</span>
       <span class="stat-value">{{ stats.this_week }}</span>
     </div>
     <div class="stat-card muted">
-      <span class="stat-label">Total rides</span>
+      <span class="stat-label">Počet jízd</span>
       <span class="stat-value">{{ stats.ride_count }}</span>
     </div>
   </section>
 
+  <!-- Activity type breakdown -->
+  {% if stats.by_type %}
+  <section class="chart-section">
+    <h2>Podle typu aktivity</h2>
+    <div class="type-grid">
+      {% for label, data in stats.by_type.items() %}
+      <div class="stat-card">
+        <span class="stat-label">{{ label }}</span>
+        <span class="stat-value type-value">{{ data.km }}</span>
+        <span class="stat-sub">{{ data.count }} jízd</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Monthly chart with year switcher -->
+  {% if stats.monthly_chart %}
+  <section class="chart-section">
+    <h2>Km po měsících</h2>
+    <div class="year-selector" id="year-selector">
+      {% for y in stats.years %}
+      <button class="year-btn {% if loop.first %}active{% endif %}" data-year="{{ y }}">{{ y }}</button>
+      {% endfor %}
+    </div>
+    {% for y, months in stats.monthly_chart.items() %}
+    <div class="bar-chart monthly-chart" id="chart-{{ y }}" {% if not loop.first %}style="display:none"{% endif %}>
+      {% for m in months %}
+      <div class="bar-row">
+        <span class="bar-label">{{ m.label }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:{{ m.pct }}%"></div>
+        </div>
+        <span class="bar-value">{% if m.km > 0 %}{{ m.km }}{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- Year over year -->
+  {% if stats.by_year %}
+  <section class="chart-section">
+    <h2>Rok po roku</h2>
+    <div class="bar-chart">
+      {% for y, data in stats.by_year.items()|sort(attribute='0', reverse=True) %}
+      <div class="bar-row">
+        <span class="bar-label">{{ y }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:{{ data.pct }}%"></div>
+        </div>
+        <span class="bar-value">{{ data.km }} <span class="bar-count">({{ data.count }})</span></span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Recent rides -->
   <section class="rides-section">
-    <h2>Recent rides</h2>
+    <h2>Poslední jízdy</h2>
     {% if rides %}
     <table>
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Distance</th>
-          <th>Duration</th>
-          <th>Elevation</th>
+          <th>Datum</th>
+          <th>Název</th>
+          <th>Typ</th>
+          <th>Vzdálenost</th>
+          <th>Čas</th>
+          <th>Převýšení</th>
         </tr>
       </thead>
       <tbody>
@@ -69,9 +131,23 @@
       </tbody>
     </table>
     {% else %}
-    <p class="empty">No rides found yet.</p>
+    <p class="empty">Žádné jízdy.</p>
     {% endif %}
   </section>
+
   {% endif %}
+
+  <script>
+    document.getElementById('year-selector') && document.getElementById('year-selector').addEventListener('click', function(e) {
+      var btn = e.target.closest('.year-btn');
+      if (!btn) return;
+      var year = btn.dataset.year;
+      document.querySelectorAll('.year-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.monthly-chart').forEach(function(c) { c.style.display = 'none'; });
+      var chart = document.getElementById('chart-' + year);
+      if (chart) chart.style.display = '';
+    });
+  </script>
 </body>
 </html>

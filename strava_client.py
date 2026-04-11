@@ -98,6 +98,17 @@ def clear_cache():
     _cache = {"rides": None, "fetched_at": 0}
 
 
+MONTH_NAMES = ["Led", "Úno", "Bře", "Dub", "Kvě", "Čvn", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"]
+
+TYPE_LABELS = {
+    "Ride": "Silniční",
+    "GravelRide": "Gravel",
+    "MountainBikeRide": "Horské",
+    "VirtualRide": "Virtuální",
+    "EBikeRide": "E-kolo",
+}
+
+
 def compute_stats(rides):
     now = datetime.now(timezone.utc)
     week_start = (now - timedelta(days=now.weekday())).replace(
@@ -114,12 +125,58 @@ def compute_stats(rides):
     this_month = sum(r["km"] for r in rides if parse(r["date"]) >= month_start)
     this_year = sum(r["km"] for r in rides if parse(r["date"]) >= year_start)
 
+    # --- By activity type ---
+    by_type = {}
+    for r in rides:
+        label = TYPE_LABELS.get(r["type"], r["type"])
+        if label not in by_type:
+            by_type[label] = {"km": 0.0, "count": 0}
+        by_type[label]["km"] = round(by_type[label]["km"] + r["km"], 1)
+        by_type[label]["count"] += 1
+    by_type = dict(sorted(by_type.items(), key=lambda x: -x[1]["km"]))
+
+    # --- By year ---
+    by_year = {}
+    for r in rides:
+        y = r["date"][:4]
+        if y not in by_year:
+            by_year[y] = {"km": 0.0, "count": 0}
+        by_year[y]["km"] = round(by_year[y]["km"] + r["km"], 1)
+        by_year[y]["count"] += 1
+    by_year = dict(sorted(by_year.items()))
+    max_year_km = max((v["km"] for v in by_year.values()), default=1)
+    for v in by_year.values():
+        v["pct"] = round(v["km"] / max_year_km * 100, 1)
+
+    # --- Monthly km per year ---
+    monthly_by_year = {}
+    for r in rides:
+        y = r["date"][:4]
+        m = int(r["date"][5:7]) - 1
+        if y not in monthly_by_year:
+            monthly_by_year[y] = [0.0] * 12
+        monthly_by_year[y][m] = round(monthly_by_year[y][m] + r["km"], 1)
+    # Compute percentage relative to max month across all years
+    all_monthly = [km for months in monthly_by_year.values() for km in months]
+    max_monthly_km = max(all_monthly, default=1)
+    monthly_chart = {}
+    for y, months in sorted(monthly_by_year.items()):
+        monthly_chart[y] = [
+            {"label": MONTH_NAMES[i], "km": months[i],
+             "pct": round(months[i] / max_monthly_km * 100, 1)}
+            for i in range(12)
+        ]
+
     return {
         "total": round(total, 1),
         "this_week": round(this_week, 1),
         "this_month": round(this_month, 1),
         "this_year": round(this_year, 1),
         "ride_count": len(rides),
+        "by_type": by_type,
+        "by_year": by_year,
+        "monthly_chart": monthly_chart,
+        "years": sorted(monthly_chart.keys(), reverse=True),
     }
 
 
