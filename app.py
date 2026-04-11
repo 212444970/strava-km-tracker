@@ -64,16 +64,16 @@ def index():
     if not tokens:
         return render_template("index.html", connected=False)
 
-    rides = strava_client.get_rides()
-    if rides is None:
+    activities = strava_client.get_activities()
+    if activities is None:
         return render_template("index.html", connected=False)
 
-    stats = strava_client.compute_stats(rides)
-    recent = rides[:20]
-    for r in recent:
-        r["duration"] = strava_client.format_duration(r["moving_time"])
-
-    return render_template("index.html", connected=True, stats=stats, rides=recent)
+    return render_template(
+        "index.html",
+        connected=True,
+        activities=activities,
+        category_labels=strava_client.CATEGORY_LABELS,
+    )
 
 
 @app.route("/api/stats")
@@ -83,10 +83,10 @@ def api_stats():
     tokens = token_store.load()
     if not tokens:
         return jsonify({"error": "not connected"}), 503
-    rides = strava_client.get_rides()
-    if rides is None:
-        return jsonify({"error": "failed to fetch rides"}), 503
-    return jsonify(strava_client.compute_stats(rides))
+    activities = strava_client.get_activities()
+    if activities is None:
+        return jsonify({"error": "failed to fetch activities"}), 503
+    return jsonify(strava_client.compute_stats(activities))
 
 
 # ---------------------------------------------------------------------------
