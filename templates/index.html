@@ -60,6 +60,9 @@
   </div>
 </section>
 
+<!-- Motivational comparison cards -->
+<div id="comparisons"></div>
+
 <!-- Monthly comparison -->
 <section class="chart-section">
   <div class="section-header">
@@ -253,6 +256,154 @@ function renderSummary(s, rr) {
     sub.textContent = 'lineární projekce';
 }
 
+// ── Comparisons ───────────────────────────────────────────────────────────────
+
+function computeComparisons(rides) {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMon  = now.getMonth() + 1; // 1-indexed
+  const curDay  = now.getDate();
+
+  function sumFor(y, maxMon, maxDay) {
+    let km = 0, elev = 0;
+    for (const r of rides) {
+      const ry = +r.date.slice(0,4), rm = +r.date.slice(5,7), rd = +r.date.slice(8,10);
+      if (ry !== y) continue;
+      if (rm < maxMon || (rm === maxMon && rd <= maxDay)) { km += r.km; elev += r.elevation; }
+    }
+    return { km: Math.round(km), elev: Math.round(elev) };
+  }
+
+  function monthSum(y, m) {
+    let km = 0, elev = 0;
+    for (const r of rides) {
+      if (+r.date.slice(0,4) === y && +r.date.slice(5,7) === m) { km += r.km; elev += r.elevation; }
+    }
+    return { km: Math.round(km), elev: Math.round(elev) };
+  }
+
+  function fullYear(y) {
+    return rides.filter(r => +r.date.slice(0,4) === y).reduce((s,r) => s + r.km, 0);
+  }
+
+  const pastYears = [...new Set(rides.filter(r => +r.date.slice(0,4) < curYear).map(r => +r.date.slice(0,4)))].sort((a,b)=>a-b);
+
+  const curYTD  = sumFor(curYear, curMon, curDay);
+  const curMonth = monthSum(curYear, curMon);
+
+  function ytdAndMonth(y) {
+    return { ytd: sumFor(y, curMon, curDay), month: monthSum(y, curMon) };
+  }
+
+  const ly  = curYear - 1;  const y5  = curYear - 5;
+  const y10 = curYear - 10;
+
+  const lyData  = ytdAndMonth(ly);
+  const y5Data  = ytdAndMonth(y5);
+  const y10Data = ytdAndMonth(y10);
+
+  // Historical stats for current month and YTD
+  const pastMonKms  = pastYears.map(y => monthSum(y, curMon).km).filter(v => v > 0);
+  const pastYTDKms  = pastYears.map(y => sumFor(y, curMon, curDay).km).filter(v => v > 0);
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+  const max = arr => arr.length ? Math.max(...arr) : 0;
+
+  const maxMonKm  = max(pastMonKms);
+  const maxMonYear = pastYears.find(y => monthSum(y, curMon).km === maxMonKm) || '–';
+  const maxYTDKm  = max(pastYTDKms);
+  const maxYTDYear = pastYears.find(y => sumFor(y, curMon, curDay).km === maxYTDKm) || '–';
+
+  const lyTotal = Math.round(fullYear(ly));
+  const toMatch = Math.max(0, lyTotal - curYTD.km);
+  const ytdPct  = lyTotal > 0 ? Math.min(100, Math.round(curYTD.km / lyTotal * 100)) : 0;
+
+  return {
+    curYear, curMon, ly, y5, y10,
+    month:  { cur: curMonth, ly: lyData.month, y5: y5Data.month, y10: y10Data.month,
+              avg: avg(pastMonKms), record: { km: maxMonKm, year: maxMonYear } },
+    ytd:    { cur: curYTD,   ly: lyData.ytd,   y5: y5Data.ytd,   y10: y10Data.ytd,
+              avg: avg(pastYTDKms), record: { km: maxYTDKm, year: maxYTDYear },
+              toMatch, ytdPct, lyTotal },
+  };
+}
+
+function renderComparisons(c) {
+  const el = document.getElementById('comparisons');
+  if (!el || !c) return;
+
+  function delta(cur, ref) {
+    if (!ref) return null;
+    const p = Math.round((cur - ref) / ref * 100);
+    return { p, good: p >= 0, str: (p >= 0 ? '+' : '') + p + '%' };
+  }
+
+  function cmpRow(label, ref, cur, unit='km') {
+    const d = delta(cur, ref);
+    if (!d || !ref) return '';
+    const cls = d.good ? 'cmp-up' : 'cmp-dn';
+    const arr = d.good ? '↑' : '↓';
+    return `<div class="cmp-row ${cls}">${arr} <b>${d.str}</b> vs ${label}: ${ref} ${unit}</div>`;
+  }
+
+  function infoRow(html) { return `<div class="cmp-row cmp-neutral">${html}</div>`; }
+
+  function card(title, val, unit, rows) {
+    return `<div class="compare-card">
+      <div class="cmp-title">${title}</div>
+      <div class="cmp-main">${val}<span class="cmp-unit"> ${unit}</span></div>
+      ${rows.filter(Boolean).join('')}
+    </div>`;
+  }
+
+  const MN = MONTHS[c.curMon - 1];
+
+  const cards = [
+    // This month km
+    card(`${MN} — vzdálenost`, r1(c.month.cur.km), 'km', [
+      cmpRow('loni', c.month.ly.km, c.month.cur.km),
+      cmpRow('průměr', c.month.avg, c.month.cur.km),
+      c.month.y5.km  ? cmpRow(`${c.y5} (5 let)`,  c.month.y5.km,  c.month.cur.km) : '',
+      c.month.y10.km ? cmpRow(`${c.y10} (10 let)`, c.month.y10.km, c.month.cur.km) : '',
+      c.month.record.km ? infoRow(`Rekord: <b>${c.month.record.km} km</b> (${c.month.record.year})`) : '',
+    ]),
+
+    // YTD km
+    card(`YTD ${c.curYear} — vzdálenost`, r1(c.ytd.cur.km), 'km', [
+      cmpRow('loni', c.ytd.ly.km, c.ytd.cur.km),
+      cmpRow('průměr', c.ytd.avg, c.ytd.cur.km),
+      c.ytd.y5.km  ? cmpRow(`${c.y5} (5 let)`,  c.ytd.y5.km,  c.ytd.cur.km) : '',
+      c.ytd.y10.km ? cmpRow(`${c.y10} (10 let)`, c.ytd.y10.km, c.ytd.cur.km) : '',
+      c.ytd.record.km ? infoRow(`Rekord: <b>${c.ytd.record.km} km</b> (${c.ytd.record.year})`) : '',
+    ]),
+
+    // Progress to match last year
+    `<div class="compare-card">
+      <div class="cmp-title">Do loňského roku ${c.ly}</div>
+      <div class="cmp-main">${c.ytd.toMatch}<span class="cmp-unit"> km</span></div>
+      <div class="cmp-progress-track"><div class="cmp-progress-fill" style="width:${c.ytd.ytdPct}%"></div></div>
+      <div class="cmp-row cmp-neutral">${c.ytd.ytdPct}% z ${c.ytd.lyTotal} km</div>
+      ${c.ytd.toMatch === 0 ? '<div class="cmp-row cmp-up">✓ Loňský rok překonán!</div>' : ''}
+    </div>`,
+
+    // This month elevation (only if Strava data available)
+    c.month.cur.elev > 0 ? card(`${MN} — výška`, (c.month.cur.elev/1000).toFixed(1), 'km↑', [
+      c.month.ly.elev  ? cmpRow('loni', c.month.ly.elev,  c.month.cur.elev, 'm') : '',
+      c.month.y5.elev  ? cmpRow(`${c.y5}`,  c.month.y5.elev,  c.month.cur.elev, 'm') : '',
+      c.month.y10.elev ? cmpRow(`${c.y10}`, c.month.y10.elev, c.month.cur.elev, 'm') : '',
+    ]) : null,
+
+    // YTD elevation
+    c.ytd.cur.elev > 0 ? card(`YTD — výška`, (c.ytd.cur.elev/1000).toFixed(1), 'km↑', [
+      c.ytd.ly.elev  ? cmpRow('loni', c.ytd.ly.elev,  c.ytd.cur.elev, 'm') : '',
+      c.ytd.y5.elev  ? cmpRow(`${c.y5}`,  c.ytd.y5.elev,  c.ytd.cur.elev, 'm') : '',
+      c.ytd.y10.elev ? cmpRow(`${c.y10}`, c.ytd.y10.elev, c.ytd.cur.elev, 'm') : '',
+    ]) : null,
+  ].filter(Boolean);
+
+  el.innerHTML = `<div class="compare-grid">${cards.join('')}</div>`;
+}
+
 function renderMonthly(d) {
   document.getElementById('chart-year-lbl').textContent = d.curYear;
 
@@ -405,6 +556,7 @@ function refresh() {
   const sum = computeSummary(rides);
   const rr  = computeRunRate(rides);
   renderSummary(sum, rr);
+  renderComparisons(computeComparisons(rides));
   renderMonthly(computeMonthly(rides));
   renderYearly(computeByYear(rides));
   renderInsights(computeInsights(rides));
