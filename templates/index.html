@@ -350,12 +350,13 @@ function renderRides(rides) {
     <th>Datum</th><th>Název</th><th>Typ</th><th>Vzdálenost</th><th>Čas</th><th>Převýšení</th>
   </tr></thead><tbody>`;
   for (const r of recent) {
-    html += `<tr>
-      <td class="date">${r.date}</td>
+    const isHist = r.source === 'historical';
+    html += `<tr${isHist?' class="hist-row"':''}>
+      <td class="date">${r.date.slice(0,7)}${isHist?' <span class="hist-badge">hist.</span>':''}</td>
       <td>${esc(r.name)}</td>
       <td class="type">${esc(r.type)}</td>
       <td class="num">${r.km > 0 ? r.km+' km' : '–'}</td>
-      <td class="num">${fmtDur(r.moving_time)}</td>
+      <td class="num">${r.moving_time > 0 ? fmtDur(r.moving_time) : '–'}</td>
       <td class="num">${r.elevation > 0 ? r.elevation+' m' : '–'}</td>
     </tr>`;
   }

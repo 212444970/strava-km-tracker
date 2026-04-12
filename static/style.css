@@ -287,6 +287,15 @@ tbody tr { border-bottom: 1px solid #1a1a1a; transition: background 0.1s; }
 tbody tr:hover { background: #181818; }
 td { padding: 0.6rem 0.7rem; color: #bbb; }
 td.date  { color: #555; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.hist-row td { color: #444; }
+.hist-badge {
+  font-size: 0.65rem;
+  background: #2a2a2a;
+  color: #555;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  vertical-align: middle;
+}
 td.num   { font-variant-numeric: tabular-nums; text-align: right; }
 td.type  { color: #666; font-size: 0.8rem; }
 

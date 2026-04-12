@@ -1,0 +1,1362 @@
+[
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-04-15",
+    "km": 15.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-05-15",
+    "km": 30.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-06-15",
+    "km": 30.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-07-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-08-15",
+    "km": 98.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-09-15",
+    "km": 160.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2006-10-15",
+    "km": 40.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-01-15",
+    "km": 8.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-02-15",
+    "km": 9.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-03-15",
+    "km": 19.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-04-15",
+    "km": 104.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-05-15",
+    "km": 23.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-06-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-07-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2007-08-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-05-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-06-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-07-15",
+    "km": 225.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-08-15",
+    "km": 370.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-09-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2008-10-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-04-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-05-15",
+    "km": 90.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-06-15",
+    "km": 300.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-07-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-08-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-09-15",
+    "km": 80.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-10-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-11-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2009-12-15",
+    "km": 30.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-04-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-05-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-06-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-07-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-08-15",
+    "km": 200.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2010-09-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2011-05-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2011-06-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2011-07-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2011-08-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-02-15",
+    "km": 20.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-03-15",
+    "km": 45.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-04-15",
+    "km": 85.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-05-15",
+    "km": 150.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-06-15",
+    "km": 323.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-07-15",
+    "km": 290.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-08-15",
+    "km": 70.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2012-09-15",
+    "km": 448.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-04-15",
+    "km": 80.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-05-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-06-15",
+    "km": 40.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-07-15",
+    "km": 35.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-08-15",
+    "km": 114.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2013-09-15",
+    "km": 90.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-04-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-05-15",
+    "km": 100.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-06-15",
+    "km": 70.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-08-15",
+    "km": 36.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-09-15",
+    "km": 12.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2014-10-15",
+    "km": 57.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-02-15",
+    "km": 22.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-04-15",
+    "km": 78.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-05-15",
+    "km": 158.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-06-15",
+    "km": 122.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-07-15",
+    "km": 219.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-09-15",
+    "km": 108.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2015-10-15",
+    "km": 118.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-03-15",
+    "km": 45.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-04-15",
+    "km": 91.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-05-15",
+    "km": 287.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-06-15",
+    "km": 166.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-07-15",
+    "km": 176.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-08-15",
+    "km": 40.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2016-09-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-05-15",
+    "km": 63.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-06-15",
+    "km": 75.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-07-15",
+    "km": 155.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-08-15",
+    "km": 226.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-09-15",
+    "km": 185.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2017-10-15",
+    "km": 201.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-04-15",
+    "km": 74.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-05-15",
+    "km": 273.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-06-15",
+    "km": 277.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-07-15",
+    "km": 261.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-08-15",
+    "km": 378.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-09-15",
+    "km": 227.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2018-10-15",
+    "km": 171.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-02-15",
+    "km": 48.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-03-15",
+    "km": 108.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-04-15",
+    "km": 255.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-05-15",
+    "km": 251.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-06-15",
+    "km": 480.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-07-15",
+    "km": 197.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-08-15",
+    "km": 236.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-09-15",
+    "km": 255.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-10-15",
+    "km": 257.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2019-11-15",
+    "km": 78.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-03-15",
+    "km": 73.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-04-15",
+    "km": 153.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-05-15",
+    "km": 510.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-06-15",
+    "km": 541.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-07-15",
+    "km": 130.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-08-15",
+    "km": 304.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-09-15",
+    "km": 349.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-10-15",
+    "km": 143.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-11-15",
+    "km": 52.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2020-12-15",
+    "km": 104.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-03-15",
+    "km": 34.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-04-15",
+    "km": 51.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-05-15",
+    "km": 118.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-06-15",
+    "km": 202.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-07-15",
+    "km": 72.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-08-15",
+    "km": 71.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-09-15",
+    "km": 82.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2021-10-15",
+    "km": 45.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-02-15",
+    "km": 12.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-03-15",
+    "km": 15.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-04-15",
+    "km": 48.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-05-15",
+    "km": 300.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-06-15",
+    "km": 243.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-07-15",
+    "km": 199.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-08-15",
+    "km": 180.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-09-15",
+    "km": 153.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-10-15",
+    "km": 74.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-11-15",
+    "km": 46.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2022-12-15",
+    "km": 18.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-01-15",
+    "km": 45.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-04-15",
+    "km": 88.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-05-15",
+    "km": 160.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-06-15",
+    "km": 209.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-07-15",
+    "km": 208.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-08-15",
+    "km": 162.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-09-15",
+    "km": 193.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-10-15",
+    "km": 50.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-11-15",
+    "km": 21.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  },
+  {
+    "name": "Historická data (MTB)",
+    "date": "2023-12-15",
+    "km": 32.0,
+    "elevation": 0,
+    "moving_time": 0,
+    "type": "MountainBikeRide",
+    "category": "mtb",
+    "source": "historical"
+  }
+]

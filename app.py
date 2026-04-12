@@ -17,6 +17,7 @@ from flask import (
 
 import strava_client
 import token_store
+import historical_store
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
@@ -68,10 +69,18 @@ def index():
     if activities is None:
         return render_template("index.html", connected=False)
 
+    # Merge: historical data covers pre-2024, Strava covers 2024+
+    historical = historical_store.load()
+    if historical:
+        strava_recent = [a for a in activities if a["date"] >= historical_store.HISTORICAL_CUTOFF]
+        all_activities = sorted(historical + strava_recent, key=lambda x: x["date"], reverse=True)
+    else:
+        all_activities = activities
+
     return render_template(
         "index.html",
         connected=True,
-        activities=activities,
+        activities=all_activities,
         category_labels=strava_client.CATEGORY_LABELS,
     )
 
