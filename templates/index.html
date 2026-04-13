@@ -61,6 +61,14 @@ const ALL = {{ activities | tojson }};
 
 let selCats = new Set();
 
+// ── Column navigation state ────────────────────────────────────────────────
+const _now0  = new Date();
+let dispYear     = _now0.getFullYear();
+let dispMonYear  = _now0.getFullYear();
+let dispMon      = _now0.getMonth() + 1;
+let dispWkOffset = 0;  // 0 = current week, 1 = last week, …
+const _minYear   = Math.min(...ALL.map(a => +a.date.slice(0, 4)));
+
 const availCats = (() => {
   const found = new Set(ALL.map(a => a.category));
   return ['road','mtb','virtual','ebike','ski','run','hike','swim','other'].filter(c => found.has(c));
@@ -85,29 +93,49 @@ function pct(cur, ref) {
 // ── 1. Current performance ────────────────────────────────────────────────────
 
 function computeCurrent(rides) {
-  const now=new Date(), Y=now.getFullYear(), M=now.getMonth()+1, D=now.getDate();
+  const now=new Date();
+  const curY=now.getFullYear(), curM=now.getMonth()+1, curD=now.getDate();
+  const isCurYear=dispYear===curY;
+  const isMonCur=dispMonYear===curY&&dispMon===curM;
+  // Week start for selected week (offset back by dispWkOffset weeks)
   const wday=now.getDay()===0?6:now.getDay()-1;
-  const wkStart=new Date(Y,M-1,D-wday);
+  const wkStart=new Date(curY,curM-1,curD-wday-dispWkOffset*7);
+  const wkEnd=new Date(wkStart.getFullYear(),wkStart.getMonth(),wkStart.getDate()+7);
   const ytd={km:0,commute:0,dur:0,elev:0,cnt:0};
   const mon={km:0,commute:0,dur:0,elev:0,cnt:0};
   const wk= {km:0,commute:0,dur:0,elev:0,cnt:0};
-  const isCommute=r=>{ const n=r.name.toLowerCase(); return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů')); };
+  const isCommute=r=>{const n=r.name.toLowerCase();return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů'));};
   for (const r of rides) {
     const ry=+r.date.slice(0,4),rm=+r.date.slice(5,7),rd=+r.date.slice(8,10);
-    if (ry!==Y) continue;
     const c=isCommute(r)?r.km:0;
-    ytd.km+=r.km; ytd.commute+=c; ytd.dur+=r.moving_time; ytd.elev+=r.elevation; ytd.cnt++;
-    if (rm===M) { mon.km+=r.km; mon.commute+=c; mon.dur+=r.moving_time; mon.elev+=r.elevation; mon.cnt++; }
-    if (new Date(ry,rm-1,rd)>=wkStart) { wk.km+=r.km; wk.commute+=c; wk.dur+=r.moving_time; wk.elev+=r.elevation; wk.cnt++; }
+    // Col 1: selected year — YTD (up to today's date) if current year, full year if past
+    if (ry===dispYear&&(!isCurYear||rm<curM||(rm===curM&&rd<=curD)))
+      {ytd.km+=r.km;ytd.commute+=c;ytd.dur+=r.moving_time;ytd.elev+=r.elevation;ytd.cnt++;}
+    // Col 2: selected month
+    if (ry===dispMonYear&&rm===dispMon)
+      {mon.km+=r.km;mon.commute+=c;mon.dur+=r.moving_time;mon.elev+=r.elevation;mon.cnt++;}
+    // Col 3: selected week
+    const rDate=new Date(ry,rm-1,rd);
+    if (rDate>=wkStart&&rDate<wkEnd)
+      {wk.km+=r.km;wk.commute+=c;wk.dur+=r.moving_time;wk.elev+=r.elevation;wk.cnt++;}
   }
   const fmt=o=>({km:r1(o.km),commute:r1(o.commute),dur:Math.round(o.dur),elev:Math.round(o.elev),cnt:o.cnt});
-  return {ytd:fmt(ytd),mon:fmt(mon),wk:fmt(wk),Y,M};
+  // Y and M are the REAL current values (needed by computeVs for same-day comparisons)
+  return {ytd:fmt(ytd),mon:fmt(mon),wk:fmt(wk),Y:curY,M:curM,isCurYear,isMonCur,wkStart};
 }
 
 function renderCurrent(c) {
   const el=document.getElementById('sec-current');
   if (!el) return;
-  const MN=MONTHS[c.M-1];
+  const yrLbl=c.isCurYear?`YTD ${dispYear}`:String(dispYear);
+  const monLbl=dispMonYear!==c.Y?`${MONTHS[dispMon-1]} ${dispMonYear}`:MONTHS[dispMon-1];
+  // Week label: "Tento týden" if current, otherwise date range
+  const now=new Date();
+  const todayWkStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(now.getDay()===0?6:now.getDay()-1));
+  const isCurWk=c.wkStart.getTime()===todayWkStart.getTime();
+  const wkEnd=new Date(c.wkStart); wkEnd.setDate(wkEnd.getDate()+6);
+  const fd2=d=>`${d.getDate()}.${d.getMonth()+1}.`;
+  const wkLbl=isCurWk?'Tento týden':`${fd2(c.wkStart)}–${fd2(wkEnd)}`;
   const fk=v=>v>0?v+' km':'–';
   const fd=v=>v>0?fmtDur(v):'–';
   const fe=v=>v>0?(v/1000).toFixed(1)+' km↑':'–';
@@ -115,9 +143,9 @@ function renderCurrent(c) {
   el.innerHTML=`
   <div class="perf-table">
     <div class="pt-corner"></div>
-    <div class="pt-head">YTD ${c.Y}</div>
-    <div class="pt-head">${MN}</div>
-    <div class="pt-head">Tento týden</div>
+    <div class="pt-head"><button class="pt-nav" id="yr-prev">‹</button>${yrLbl}<button class="pt-nav" id="yr-next"${dispYear>=c.Y?' disabled':''}>›</button></div>
+    <div class="pt-head"><button class="pt-nav" id="mon-prev">‹</button>${monLbl}<button class="pt-nav" id="mon-next"${c.isMonCur?' disabled':''}>›</button></div>
+    <div class="pt-head"><button class="pt-nav" id="wk-prev">‹</button>${wkLbl}<button class="pt-nav" id="wk-next"${dispWkOffset===0?' disabled':''}>›</button></div>
 
     <div class="pt-label">Vzdálenost</div>
     <div class="pt-val pt-accent">${fk(c.ytd.km)}</div>
@@ -144,6 +172,17 @@ function renderCurrent(c) {
     <div class="pt-val">${fc(c.mon.cnt)}</div>
     <div class="pt-val">${fc(c.wk.cnt)}</div>
   </div>`;
+  // Nav handlers
+  document.getElementById('yr-prev').onclick=()=>{if(dispYear>_minYear){dispYear--;refresh();}};
+  document.getElementById('yr-next').onclick=()=>{if(dispYear<c.Y){dispYear++;refresh();}};
+  document.getElementById('mon-prev').onclick=()=>{
+    if(dispMonYear>_minYear||dispMon>1){dispMon--;if(dispMon<1){dispMon=12;dispMonYear--;}refresh();}
+  };
+  document.getElementById('mon-next').onclick=()=>{
+    if(!c.isMonCur){dispMon++;if(dispMon>12){dispMon=1;dispMonYear++;}refresh();}
+  };
+  document.getElementById('wk-prev').onclick=()=>{dispWkOffset++;refresh();};
+  document.getElementById('wk-next').onclick=()=>{if(dispWkOffset>0){dispWkOffset--;refresh();}};
 }
 
 // ── 2. Comparisons + projection ───────────────────────────────────────────────
