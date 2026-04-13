@@ -43,10 +43,7 @@
   <div id="yearly-chart" class="bar-chart"></div>
 </section>
 
-<!-- 4. Celková statistika -->
-<div id="sec-alltime"></div>
-
-<!-- 5. Insighty (2024+) + posledních 5 aktivit -->
+<!-- 4. Insighty (2024+) + posledních 5 aktivit -->
 <section class="chart-section">
   <h2>Rekordy & insighty <span class="dim">(od 2024)</span></h2>
   <div id="insights"></div>
@@ -91,16 +88,20 @@ function computeCurrent(rides) {
   const now=new Date(), Y=now.getFullYear(), M=now.getMonth()+1, D=now.getDate();
   const wday=now.getDay()===0?6:now.getDay()-1;
   const wkStart=new Date(Y,M-1,D-wday);
-  const ytd={km:0,elev:0,cnt:0}, mon={km:0,elev:0,cnt:0}, wk={km:0,elev:0,cnt:0};
+  const ytd={km:0,commute:0,dur:0,elev:0,cnt:0};
+  const mon={km:0,commute:0,dur:0,elev:0,cnt:0};
+  const wk= {km:0,commute:0,dur:0,elev:0,cnt:0};
+  const isCommute=r=>{ const n=r.name.toLowerCase(); return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů')); };
   for (const r of rides) {
     const ry=+r.date.slice(0,4),rm=+r.date.slice(5,7),rd=+r.date.slice(8,10);
     if (ry!==Y) continue;
-    ytd.km+=r.km; ytd.elev+=r.elevation; ytd.cnt++;
-    if (rm===M) { mon.km+=r.km; mon.elev+=r.elevation; mon.cnt++; }
-    if (new Date(ry,rm-1,rd)>=wkStart) { wk.km+=r.km; wk.elev+=r.elevation; wk.cnt++; }
+    const c=isCommute(r)?r.km:0;
+    ytd.km+=r.km; ytd.commute+=c; ytd.dur+=r.moving_time; ytd.elev+=r.elevation; ytd.cnt++;
+    if (rm===M) { mon.km+=r.km; mon.commute+=c; mon.dur+=r.moving_time; mon.elev+=r.elevation; mon.cnt++; }
+    if (new Date(ry,rm-1,rd)>=wkStart) { wk.km+=r.km; wk.commute+=c; wk.dur+=r.moving_time; wk.elev+=r.elevation; wk.cnt++; }
   }
-  const fmt = o => ({km:r1(o.km), elev:Math.round(o.elev), cnt:o.cnt});
-  return { ytd:fmt(ytd), mon:fmt(mon), wk:fmt(wk), Y, M };
+  const fmt=o=>({km:r1(o.km),commute:r1(o.commute),dur:Math.round(o.dur),elev:Math.round(o.elev),cnt:o.cnt});
+  return {ytd:fmt(ytd),mon:fmt(mon),wk:fmt(wk),Y,M};
 }
 
 function renderCurrent(c) {
@@ -108,6 +109,7 @@ function renderCurrent(c) {
   if (!el) return;
   const MN=MONTHS[c.M-1];
   const fk=v=>v>0?v+' km':'–';
+  const fd=v=>v>0?fmtDur(v):'–';
   const fe=v=>v>0?(v/1000).toFixed(1)+' km↑':'–';
   const fc=v=>v>0?v:'–';
   el.innerHTML=`
@@ -121,6 +123,16 @@ function renderCurrent(c) {
     <div class="pt-val pt-accent">${fk(c.ytd.km)}</div>
     <div class="pt-val">${fk(c.mon.km)}</div>
     <div class="pt-val">${fk(c.wk.km)}</div>
+
+    <div class="pt-label">Do práce</div>
+    <div class="pt-val">${fk(c.ytd.commute)}</div>
+    <div class="pt-val">${fk(c.mon.commute)}</div>
+    <div class="pt-val">${fk(c.wk.commute)}</div>
+
+    <div class="pt-label">Čas</div>
+    <div class="pt-val">${fd(c.ytd.dur)}</div>
+    <div class="pt-val">${fd(c.mon.dur)}</div>
+    <div class="pt-val">${fd(c.wk.dur)}</div>
 
     <div class="pt-label">Výška</div>
     <div class="pt-val">${fe(c.ytd.elev)}</div>
@@ -296,35 +308,7 @@ function renderYearly(rows) {
   document.getElementById('yearly-chart').innerHTML=html||'<p class="empty">Žádná data.</p>';
 }
 
-// ── 4. All-time ───────────────────────────────────────────────────────────────
-
-function renderAllTime(rides) {
-  const el=document.getElementById('sec-alltime');
-  if (!el) return;
-  const km=r1(rides.reduce((s,r)=>s+r.km,0));
-  const elev=Math.round(rides.reduce((s,r)=>s+r.elevation,0));
-  const cnt=rides.length;
-  el.innerHTML=`<section class="chart-section">
-    <h2>Celková statistika</h2>
-    <div class="alltime-grid">
-      <div class="alltime-card accent">
-        <span class="alltime-lbl">Celkem km</span>
-        <span class="alltime-val">${km.toLocaleString('cs')}</span>
-      </div>
-      <div class="alltime-card">
-        <span class="alltime-lbl">Výška celkem</span>
-        <span class="alltime-val">${(elev/1000).toFixed(0)} km↑</span>
-        <span class="alltime-sub">${(elev/8849).toFixed(1)}× Everest</span>
-      </div>
-      <div class="alltime-card muted">
-        <span class="alltime-lbl">Celkem aktivit</span>
-        <span class="alltime-val">${cnt}</span>
-      </div>
-    </div>
-  </section>`;
-}
-
-// ── 5. Insights (2024+) ───────────────────────────────────────────────────────
+// ── 4. Insights (2024+) ───────────────────────────────────────────────────────
 
 function computeInsights(rides) {
   if (!rides.length) return null;
@@ -341,11 +325,15 @@ function computeInsights(rides) {
            activeYears:new Set(rides.map(r=>r.date.slice(0,4))).size, count:rides.length };
 }
 
-function renderInsights(ins) {
+function renderInsights(ins, allTimeKm, allTimeDur) {
   const el=document.getElementById('insights');
   if (!ins) { el.innerHTML='<p class="empty">Žádná data od 2024.</p>'; return; }
   const bm=ins.bestYM?`${ins.bestYM.slice(0,4)} · ${MONTHS[+ins.bestYM.slice(5,7)-1]}`:'–';
+  const kmFmt=allTimeKm?Math.round(allTimeKm).toLocaleString('cs'):'–';
+  const durFmt=allTimeDur?fmtDur(allTimeDur):'–';
   el.innerHTML=`<div class="insights-grid">
+    <div class="insight-card"><span class="insight-lbl">Celkem km (vše)</span><span class="insight-val">${kmFmt} km</span><span class="insight-sub">od začátku záznamu</span></div>
+    <div class="insight-card"><span class="insight-lbl">Celková doba (vše)</span><span class="insight-val">${durFmt}</span><span class="insight-sub">součet všech aktivit</span></div>
     <div class="insight-card"><span class="insight-lbl">Nejdelší aktivita</span><span class="insight-val">${ins.longest.km} km</span><span class="insight-sub">${esc(ins.longest.name)}<br>${ins.longest.date}</span></div>
     <div class="insight-card"><span class="insight-lbl">Nejlepší měsíc</span><span class="insight-val">${ins.bestMonKm} km</span><span class="insight-sub">${bm}</span></div>
     <div class="insight-card"><span class="insight-lbl">Průměr / aktivita</span><span class="insight-val">${ins.avgKm} km</span><span class="insight-sub">↑ ${ins.avgElev} m průměrně</span></div>
@@ -400,10 +388,11 @@ function refresh() {
   renderVs(vs,rr,cur);
   renderMonthly(computeMonthly(rides));
   renderYearly(computeByYear(rides));
-  renderAllTime(rides);
 
+  const allTimeKm=rides.reduce((s,r)=>s+r.km,0);
+  const allTimeDur=rides.reduce((s,r)=>s+r.moving_time,0);
   const rides2024=rides.filter(r=>r.date>='2024-01-01'&&r.source!=='historical');
-  renderInsights(computeInsights(rides2024));
+  renderInsights(computeInsights(rides2024),allTimeKm,allTimeDur);
   renderRides(rides);
 }
 
