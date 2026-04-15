@@ -32,8 +32,8 @@ header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
 
 .perf-table {
   display: grid;
-  grid-template-columns: 5.5rem repeat(4, 1fr);
-  min-width: 540px;
+  grid-template-columns: 5.5rem repeat(3, 1fr);
+  min-width: 420px;
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
   border-radius: 12px;
@@ -64,6 +64,17 @@ header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
 }
 .pt-nav:hover:not([disabled]) { color: #aaa; }
 .pt-nav[disabled] { color: #252525; cursor: default; }
+
+.pt-section {
+  grid-column: 1 / -1;
+  background: #131313;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #444;
+}
+.pt-section-sep { border-top: 1px solid #252525; }
 
 .pt-corner { padding: 0.65rem 1rem; border-bottom: 1px solid #2a2a2a; }
 
