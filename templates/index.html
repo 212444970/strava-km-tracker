@@ -83,6 +83,20 @@
 
 <script>
 const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+const MONTH_COLORS = [
+  '#6090e0', // Led – zimní modrá
+  '#4878cc', // Úno – zimní modrá tmavší
+  '#60c060', // Bře – jarní zelená
+  '#90d040', // Dub – žlutozelená
+  '#c8dc28', // Kvě – limetkově žlutá
+  '#f0b420', // Čvn – oranžovožlutá
+  '#f07020', // Čvc – oranžová
+  '#e04020', // Srp – červenooranžová
+  '#e09820', // Zář – zlatá
+  '#c06820', // Říj – jantarová
+  '#904030', // Lis – hnědá
+  '#5070c8', // Pro – zimní modrá
+];
 const CAT_LABELS = {{ category_labels | tojson }};
 const ALL = {{ activities | tojson }};
 
@@ -304,7 +318,7 @@ function renderMonthly(d) {
     html+=`<div class="bar-row${future?' bar-future':''}">
       <span class="bar-label">${MONTHS[m]}</span>
       <div class="bar-wrap">
-        <div class="bar-track"><div class="bar-fill${future?' bar-dim':''}" style="width:${val/maxVal*100}%"></div></div>
+        <div class="bar-track"><div class="bar-fill${future?' bar-dim':''}" style="width:${val/maxVal*100}%;${future?'':'background:'+MONTH_COLORS[m]}"></div></div>
         ${d.hasPast&&avgV>0?`<div class="bar-avg-mk" style="left:${avgV/maxVal*100}%" title="Průměr: ${avgV} km"></div>`:''}
         ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%" title="Max: ${maxV} km"></div>`:''}
       </div>
@@ -316,18 +330,21 @@ function renderMonthly(d) {
 
 function computeByYear(rides) {
   const byYear={};
-  for (const r of rides) { const y=r.date.slice(0,4); if(!byYear[y])byYear[y]={km:0,elev:0,count:0}; byYear[y].km+=r.km;byYear[y].elev+=r.elevation;byYear[y].count++; }
-  const rows=Object.entries(byYear).map(([y,d])=>({year:y,km:Math.round(d.km),elev:Math.round(d.elev),count:d.count})).sort((a,b)=>b.year.localeCompare(a.year));
+  for (const r of rides) {
+    const y=r.date.slice(0,4), m=+r.date.slice(5,7)-1;
+    if(!byYear[y])byYear[y]={km:0,elev:0,count:0,months:Array(12).fill(0)};
+    byYear[y].km+=r.km;byYear[y].elev+=r.elevation;byYear[y].count++;byYear[y].months[m]+=r.km;
+  }
+  const rows=Object.entries(byYear).map(([y,d])=>({year:y,km:Math.round(d.km),elev:Math.round(d.elev),count:d.count,months:d.months})).sort((a,b)=>b.year.localeCompare(a.year));
   const maxKm=Math.max(...rows.map(r=>r.km),1);
   return rows.map(r=>({...r,pct:Math.round(r.km/maxKm*100)}));
 }
 
 function renderYearly(rows) {
-  const PALETTE=['#fc4c02','#4da6ff','#3ecf70','#ffcc44','#cc88ff','#ff6699','#44ddcc','#ff9944','#aaaaaa','#e05454'];
   let html='';
-  for (let i=0;i<rows.length;i++) {
-    const r=rows[i], clr=PALETTE[i%PALETTE.length];
-    html+=`<div class="bar-row"><span class="bar-label">${r.year}</span><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${r.pct}%;background:${clr}"></div></div></div><span class="bar-value">${r.km} km <span class="dim">(${r.count})</span></span></div>`;
+  for (const r of rows) {
+    const segs=r.months.map((km,i)=>km>0?`<div style="flex:${km};background:${MONTH_COLORS[i]};height:100%"></div>`:'').join('');
+    html+=`<div class="bar-row"><span class="bar-label">${r.year}</span><div class="bar-wrap"><div class="bar-track"><div style="width:${r.pct}%;height:100%;display:flex">${segs}</div></div></div><span class="bar-value">${r.km} km <span class="dim">(${r.count})</span></span></div>`;
   }
   document.getElementById('yearly-chart').innerHTML=html||'<p class="empty">Žádná data.</p>';
 }
@@ -416,7 +433,7 @@ function renderTopMonths({top10, cur}) {
   const MEDALS=['🥇','🥈','🥉'];
   const rankLbl=r=>r.rank<=3?`<span style="font-size:1rem">${MEDALS[r.rank-1]}</span>`:`${r.rank}.`;
   const avgSpd=r=>r.dur>0?r1(r.km/(r.dur/3600))+' km/h':'–';
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Měsíc</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Výška</th><th class="num">Čas</th><th class="num">Aktivit</th><th class="num">DP km</th><th class="num">DP výška</th><th class="num">DP čas</th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Měsíc</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Výška</th><th class="num">Čas</th><th class="num">Aktivit</th></tr></thead><tbody>`;
   const rowHtml=(r,extra)=>
     `<tr${extra||''}><td class="num">${rankLbl(r)}</td><td class="date">${r.ym}</td>
       <td class="num">${r.km} km</td>
@@ -424,12 +441,9 @@ function renderTopMonths({top10, cur}) {
       <td class="num">${r.elev>0?(r.elev/1000).toFixed(1)+' km↑':'–'}</td>
       <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
       <td class="num">${r.cnt}</td>
-      <td class="num">${r.cKm>0?r.cKm+' km':'–'}</td>
-      <td class="num">${r.cElev>0?(r.cElev/1000).toFixed(1)+' km↑':'–'}</td>
-      <td class="num">${r.cDur>0?fmtDur(r.cDur):'–'}</td>
     </tr>`;
   for (const r of top10) html+=rowHtml(r,'');
-  if (cur) html+=`<tr><td colspan="10" style="padding:0.3rem 0.7rem;color:#444;font-size:0.7rem;border-top:1px solid #252525">Aktuální měsíc</td></tr>`+rowHtml(cur,' style="opacity:0.6"');
+  if (cur) html+=`<tr><td colspan="7" style="padding:0.3rem 0.7rem;color:#444;font-size:0.7rem;border-top:1px solid #252525">Aktuální měsíc</td></tr>`+rowHtml(cur,' style="opacity:0.6"');
   el.innerHTML=html+'</tbody></table></div>';
 }
 
@@ -506,21 +520,25 @@ function computeTopMonthsByElev(rides) {
     if(!byMonth[ym])byMonth[ym]={km:0,elev:0,dur:0,cnt:0};
     byMonth[ym].km+=r.km;byMonth[ym].elev+=r.elevation;byMonth[ym].dur+=r.moving_time;byMonth[ym].cnt++;
   }
-  return Object.entries(byMonth)
+  const rows=Object.entries(byMonth)
     .map(([ym,d])=>({ym,km:r1(d.km),elev:Math.round(d.elev),dur:Math.round(d.dur),cnt:d.cnt}))
-    .sort((a,b)=>b.elev-a.elev).slice(0,5);
+    .sort((a,b)=>b.elev-a.elev);
+  rows.forEach((r,i)=>r.rank=i+1);
+  return rows.slice(0,5);
 }
 
 function renderTopMonthsByElev(rows) {
   const el=document.getElementById('top-months-elev'); if (!el) return;
   if (!rows.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
+  const MEDALS=['🥇','🥈','🥉'];
+  const rankLbl=r=>r.rank<=3?`<span style="font-size:1rem">${MEDALS[r.rank-1]}</span>`:`${r.rank}.`;
   const avgSpd=r=>r.dur>0?r1(r.km/(r.dur/3600))+' km/h':'–';
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>Měsíc</th><th class="num">Výška</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Čas</th><th class="num">Aktivit</th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Měsíc</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Výška</th><th class="num">Čas</th><th class="num">Aktivit</th></tr></thead><tbody>`;
   for (const r of rows) {
-    html+=`<tr><td class="date">${r.ym}</td>
-      <td class="num">${r.elev>0?(r.elev/1000).toFixed(1)+' km↑':'–'}</td>
+    html+=`<tr><td class="num">${rankLbl(r)}</td><td class="date">${r.ym}</td>
       <td class="num">${r.km} km</td>
       <td class="num">${avgSpd(r)}</td>
+      <td class="num">${r.elev>0?(r.elev/1000).toFixed(1)+' km↑':'–'}</td>
       <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
       <td class="num">${r.cnt}</td>
     </tr>`;
@@ -535,22 +553,26 @@ function computeTopMonthsByDur(rides) {
     if(!byMonth[ym])byMonth[ym]={km:0,elev:0,dur:0,cnt:0};
     byMonth[ym].km+=r.km;byMonth[ym].elev+=r.elevation;byMonth[ym].dur+=r.moving_time;byMonth[ym].cnt++;
   }
-  return Object.entries(byMonth)
+  const rows=Object.entries(byMonth)
     .map(([ym,d])=>({ym,km:r1(d.km),elev:Math.round(d.elev),dur:Math.round(d.dur),cnt:d.cnt}))
-    .sort((a,b)=>b.dur-a.dur).slice(0,5);
+    .sort((a,b)=>b.dur-a.dur);
+  rows.forEach((r,i)=>r.rank=i+1);
+  return rows.slice(0,5);
 }
 
 function renderTopMonthsByDur(rows) {
   const el=document.getElementById('top-months-dur'); if (!el) return;
   if (!rows.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
+  const MEDALS=['🥇','🥈','🥉'];
+  const rankLbl=r=>r.rank<=3?`<span style="font-size:1rem">${MEDALS[r.rank-1]}</span>`:`${r.rank}.`;
   const avgSpd=r=>r.dur>0?r1(r.km/(r.dur/3600))+' km/h':'–';
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>Měsíc</th><th class="num">Čas</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Výška</th><th class="num">Aktivit</th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Měsíc</th><th class="num">Vzdál.</th><th class="num">Ø km/h</th><th class="num">Výška</th><th class="num">Čas</th><th class="num">Aktivit</th></tr></thead><tbody>`;
   for (const r of rows) {
-    html+=`<tr><td class="date">${r.ym}</td>
-      <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
+    html+=`<tr><td class="num">${rankLbl(r)}</td><td class="date">${r.ym}</td>
       <td class="num">${r.km} km</td>
       <td class="num">${avgSpd(r)}</td>
       <td class="num">${r.elev>0?(r.elev/1000).toFixed(1)+' km↑':'–'}</td>
+      <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
       <td class="num">${r.cnt}</td>
     </tr>`;
   }
