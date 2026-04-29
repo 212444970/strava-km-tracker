@@ -242,3 +242,28 @@ tr.hist-row td { color: #444; }
   table { font-size: 0.78rem; }
   td, th { padding: 0.4rem 0.4rem; }
 }
+
+/* Monthly canvas chart (build.py static output) */
+.chart-wrap {
+  position: relative;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 1rem 0.5rem 0.5rem;
+  overflow: hidden;
+}
+.chart-wrap canvas { display: block; width: 100%; }
+.chart-tip {
+  position: absolute;
+  background: #111;
+  border: 1px solid #333;
+  color: #e8e8e8;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  white-space: nowrap;
+}
+.top-months { max-width: 280px; }
