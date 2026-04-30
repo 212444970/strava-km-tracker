@@ -322,7 +322,7 @@ function renderMonthly(d) {
       <div class="bar-wrap">
         <div class="bar-track"><div class="bar-fill${future?' bar-dim':''}" style="width:${val/maxVal*100}%;${future?'':'background:'+MONTH_COLORS[m]}"></div></div>
         ${d.hasPast&&avgV>0?`<div class="bar-avg-mk" style="left:${avgV/maxVal*100}%" title="Průměr: ${avgV} km"></div>`:''}
-        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%" title="${maxV} km · ${d.maxYear[m]}"></div>`:''}
+        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%"></div><span class="bar-max-label" style="left:${maxV/maxVal*100}%">${maxV} km · ${d.maxYear[m]}</span>`:''}
       </div>
       <span class="bar-value">${val>0?val:`<span class="dim">–</span>`}${d.hasPast&&avgV>0?` <span class="dim">/ ${avgV}</span>`:''}</span>
     </div>`;
