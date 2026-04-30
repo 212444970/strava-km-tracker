@@ -52,7 +52,7 @@
 </section>
 
 <section class="rides-section">
-  <h2>Top 10 měsíců <span class="dim">(podle km)</span></h2>
+  <h2>Top 20 měsíců <span class="dim">(podle km)</span></h2>
   <div id="top-months"></div>
 </section>
 
@@ -300,11 +300,13 @@ function computeMonthly(rides) {
   const now=new Date(), curYear=String(now.getFullYear()), curMon=now.getMonth();
   const byYear={};
   for (const r of rides) { const y=r.date.slice(0,4),m=+r.date.slice(5,7)-1; if(!byYear[y])byYear[y]=Array(12).fill(0); byYear[y][m]+=r.km; }
-  const past=Object.entries(byYear).filter(([y])=>y<curYear).map(([,ms])=>ms);
+  const pastEntries=Object.entries(byYear).filter(([y])=>y<curYear);
+  const past=pastEntries.map(([,ms])=>ms);
+  const pastYears=pastEntries.map(([y])=>y);
   const curData=(byYear[curYear]||Array(12).fill(0)).map(v=>r1(v));
-  const avg=Array(12).fill(0),max=Array(12).fill(0);
-  if (past.length) { for (let m=0;m<12;m++) { const v=past.map(y=>y[m]); avg[m]=Math.round(v.reduce((a,b)=>a+b,0)/past.length); max[m]=Math.round(Math.max(...v)); } }
-  return {curYear,curMon,curData,avg,max,hasPast:past.length>0};
+  const avg=Array(12).fill(0),max=Array(12).fill(0),maxYear=Array(12).fill('');
+  if (past.length) { for (let m=0;m<12;m++) { const v=past.map(y=>y[m]); avg[m]=Math.round(v.reduce((a,b)=>a+b,0)/past.length); const mx=Math.max(...v); max[m]=Math.round(mx); maxYear[m]=pastYears[v.indexOf(mx)]; } }
+  return {curYear,curMon,curData,avg,max,maxYear,hasPast:past.length>0};
 }
 
 function renderMonthly(d) {
@@ -320,7 +322,7 @@ function renderMonthly(d) {
       <div class="bar-wrap">
         <div class="bar-track"><div class="bar-fill${future?' bar-dim':''}" style="width:${val/maxVal*100}%;${future?'':'background:'+MONTH_COLORS[m]}"></div></div>
         ${d.hasPast&&avgV>0?`<div class="bar-avg-mk" style="left:${avgV/maxVal*100}%" title="Průměr: ${avgV} km"></div>`:''}
-        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%" title="Max: ${maxV} km"></div>`:''}
+        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%" title="${maxV} km · ${d.maxYear[m]}"></div>`:''}
       </div>
       <span class="bar-value">${val>0?val:`<span class="dim">–</span>`}${d.hasPast&&avgV>0?` <span class="dim">/ ${avgV}</span>`:''}</span>
     </div>`;
@@ -421,15 +423,15 @@ function computeTopMonths(rides) {
                      cKm:r1(d.cKm),cElev:Math.round(d.cElev),cDur:Math.round(d.cDur)}))
     .sort((a,b)=>b.km-a.km);
   all.forEach((r,i)=>r.rank=i+1);
-  const top10=all.slice(0,10);
+  const top20=all.slice(0,20);
   const cur=all.find(r=>r.ym===curYm);
-  const curInTop=top10.some(r=>r.ym===curYm);
-  return {top10, cur: (!curInTop&&cur)?cur:null};
+  const curInTop=top20.some(r=>r.ym===curYm);
+  return {top20, cur: (!curInTop&&cur)?cur:null};
 }
 
-function renderTopMonths({top10, cur}) {
+function renderTopMonths({top20, cur}) {
   const el=document.getElementById('top-months'); if (!el) return;
-  if (!top10.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
+  if (!top20.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
   const MEDALS=['🥇','🥈','🥉'];
   const rankLbl=r=>r.rank<=3?`<span style="font-size:1rem">${MEDALS[r.rank-1]}</span>`:`${r.rank}.`;
   const avgSpd=r=>r.dur>0?r1(r.km/(r.dur/3600))+' km/h':'–';
@@ -442,7 +444,7 @@ function renderTopMonths({top10, cur}) {
       <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
       <td class="num">${r.cnt}</td>
     </tr>`;
-  for (const r of top10) html+=rowHtml(r,'');
+  for (const r of top20) html+=rowHtml(r,'');
   if (cur) html+=`<tr><td colspan="7" style="padding:0.3rem 0.7rem;color:#444;font-size:0.7rem;border-top:1px solid #252525">Aktuální měsíc</td></tr>`+rowHtml(cur,' style="opacity:0.6"');
   el.innerHTML=html+'</tbody></table></div>';
 }
