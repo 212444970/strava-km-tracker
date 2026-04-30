@@ -313,7 +313,7 @@ function renderMonthly(d) {
   document.getElementById('chart-year-lbl').textContent=d.curYear;
   const legend=document.getElementById('monthly-legend');
   legend.innerHTML=d.hasPast?`<span class="leg-item"><span class="leg-avg"></span>průměr</span><span class="leg-item"><span class="leg-max"></span>max</span>`:'';
-  const maxVal=Math.max(...d.curData,...d.avg,1);
+  const maxVal=Math.max(...d.curData,...d.avg,...d.max,1);
   let html='';
   for (let m=0;m<12;m++) {
     const val=d.curData[m],avgV=d.avg[m],maxV=d.max[m],future=m>d.curMon;
