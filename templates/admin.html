@@ -40,12 +40,22 @@
       {% if garmin_error %}
         <p class="error-msg">{{ garmin_error }}</p>
       {% endif %}
-      <p>P&#345;ihla&#353; se ke Garmin Connect &#250;&#269;tu. Session se ulo&#382;&#237; &#8212; p&#345;ihl&#225;&#353;en&#237; sta&#269;&#237; jednou.</p>
+
+      <p style="margin-top:1rem"><strong>Mo&#382;nost 1: Nahr&#225;t tokeny</strong> (doporu&#269;eno)</p>
+      <p style="font-size:.85rem;color:#aaa">Garmin blokuje p&#345;ihl&#225;&#353;en&#237; ze sd&#237;len&#253;ch cloud IP. Spus&#357; <code>python garmin_login_local.py</code> lok&#225;ln&#283; a nahr&#225;j vygenerovan&#253; soubor:</p>
+      <form action="/admin/upload-garmin-tokens" method="post" enctype="multipart/form-data" class="login-form">
+        <input type="file" name="tokens_file" accept=".json" required
+               style="padding:.4rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#e8e8e8;font-size:.9rem;" />
+        <button class="btn btn-strava" type="submit">Nahr&#225;t tokeny</button>
+      </form>
+
+      <p style="margin-top:1rem"><strong>Mo&#382;nost 2: P&#345;ihl&#225;sit p&#345;&#237;mo</strong> (nemus&#237; fungovat)</p>
+      <p style="font-size:.85rem;color:#aaa">P&#345;ihla&#353; se ke Garmin Connect &#250;&#269;tu. Session se ulo&#382;&#237; &#8212; p&#345;ihl&#225;&#353;en&#237; sta&#269;&#237; jednou.</p>
       <form action="/admin/garmin-login" method="post" class="login-form">
         <input type="email" name="email" placeholder="email@example.com" required
                style="width:100%;max-width:280px;padding:.6rem 1rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#e8e8e8;font-size:1rem;outline:none;" />
         <input type="password" name="password" placeholder="Heslo" required />
-        <button class="btn btn-strava" type="submit">P&#345;ihl&#225;sit Garmin</button>
+        <button class="btn btn-secondary" type="submit">P&#345;ihl&#225;sit Garmin</button>
       </form>
     {% endif %}
   </div>
