@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,22 +12,54 @@
     <a href="/" class="btn btn-ghost">← Public page</a>
   </header>
 
+  <!-- Garmin -->
   <div class="admin-box">
-    {% if connected %}
-    <div class="status connected">Strava connected</div>
-    <p>Your activities are being fetched from Strava.</p>
-    <div class="admin-actions">
-      <form action="/admin/refresh" method="post">
-        <button class="btn btn-secondary">Sync latest rides</button>
+    <h2>Garmin Connect</h2>
+
+    {% if garmin_connected %}
+      <div class="status connected">Garmin připojen</div>
+      <p>Nové aktivity (od 16. 8. 2026) se načítají z Garmin Connect.</p>
+      <div class="admin-actions">
+        <form action="/admin/refresh" method="post">
+          <button class="btn btn-secondary">Sync Garmin</button>
+        </form>
+        <form action="/admin/garmin-disconnect" method="post">
+          <button class="btn btn-danger">Odpojit Garmin</button>
+        </form>
+      </div>
+
+    {% elif needs_mfa %}
+      <div class="status disconnected">Vyžadován MFA kód</div>
+      <p>Zadej jednorázový kód z Garmin autentizační aplikace.</p>
+      <form action="/admin/garmin-mfa" method="post" class="login-form">
+        <input type="text" name="code" placeholder="123456" maxlength="6" autocomplete="one-time-code" required />
+        <button class="btn btn-strava" type="submit">Potvrdit</button>
       </form>
-      <form action="/admin/logout-strava" method="post">
-        <button class="btn btn-danger">Disconnect Strava</button>
-      </form>
-    </div>
+
     {% else %}
-    <div class="status disconnected">Not connected</div>
-    <p>Connect your Strava account to start showing stats on the public page.</p>
-    <a href="{{ auth_url }}" class="btn btn-strava">Connect with Strava</a>
+      <div class="status disconnected">Garmin nepřipojen</div>
+      {% if garmin_error %}
+        <p class="error-msg">{{ garmin_error }}</p>
+      {% endif %}
+      <p>Přihlaš se ke Garmin Connect účtu. Session se uloží — přihlášení stačí jednou.</p>
+      <form action="/admin/garmin-login" method="post" class="login-form">
+        <input type="email" name="email" placeholder="email@example.com" required
+               style="width:100%;max-width:280px;padding:.6rem 1rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#e8e8e8;font-size:1rem;outline:none;" />
+        <input type="password" name="password" placeholder="Heslo" required />
+        <button class="btn btn-strava" type="submit">Přihlásit Garmin</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <!-- Strava archive -->
+  <div class="admin-box" style="margin-top:1.5rem">
+    <h2>Strava archiv</h2>
+    {% if archive_count > 0 %}
+      <div class="status connected">Archiv načten</div>
+      <p>{{ archive_count }} aktivit ze Stravy (do 15. 8. 2026) je uloženo jako statický archiv.</p>
+    {% else %}
+      <div class="status disconnected">Archiv chybí</div>
+      <p>Spusť <code>python export_strava.py</code> lokálně a výsledný <code>strava_archive.json</code> commitni do repozitáře.</p>
     {% endif %}
   </div>
 </body>
