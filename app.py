@@ -84,10 +84,11 @@ def admin_garmin_login():
                                garmin_connected=False,
                                archive_count=len(strava_archive_store.load()),
                                needs_mfa=True)
+    _, msg = result
     return render_template("admin.html",
                            garmin_connected=False,
                            archive_count=len(strava_archive_store.load()),
-                           garmin_error="Přihlášení selhalo. Zkontroluj email a heslo.")
+                           garmin_error=msg)
 
 
 @app.route("/admin/garmin-mfa", methods=["POST"])
@@ -97,10 +98,11 @@ def admin_garmin_mfa():
     result = garmin_client.login_mfa(code)
     if result == "ok":
         return redirect(url_for("admin"))
+    _, msg = result
     return render_template("admin.html",
                            garmin_connected=False,
                            archive_count=len(strava_archive_store.load()),
-                           garmin_error="Nesprávný MFA kód.")
+                           garmin_error=msg)
 
 
 @app.route("/admin/garmin-disconnect", methods=["POST"])

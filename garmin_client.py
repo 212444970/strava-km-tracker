@@ -35,7 +35,7 @@ CATEGORY_MAP = {
 }
 
 CATEGORY_LABELS = {
-    "road": "Silnční kolo",
+    "road": "Silniční kolo",
     "mtb": "Horské kolo",
     "virtual": "Virtuální",
     "ebike": "E-kolo",
@@ -127,30 +127,40 @@ def clear_cache():
 
 
 def login(email, password):
+    """
+    Returns:
+      'ok'            — success
+      'mfa'           — MFA code required
+      ('error', msg)  — failed with reason string
+    """
     global _pending_api
     if not _GARMIN_AVAILABLE:
-        return "error"
+        return ("error", "Knihovna garminconnect není nainstalovaná.")
     try:
-        api = Garmin(email=email, password=password)
+        api = Garmin(email=email, password=password, is_cn=False)
         api.login()
         api.garth.dump(_DATA_DIR)
         _session_save(api)
         clear_cache()
         return "ok"
     except GarminConnectAuthenticationError as e:
-        if "MFA" in str(e) or "OTP" in str(e) or "NEEDS_MFA" in str(e):
+        msg = str(e)
+        if "MFA" in msg or "OTP" in msg or "NEEDS_MFA" in msg or "NEED_MFA" in msg:
             _pending_api = api
             return "mfa"
-        return "error"
+        return ("error", f"Chyba autentizace: {msg}")
+    except GarminConnectTooManyRequestsError as e:
+        return ("error", f"Příliš mnoho požadavků, zkus za chvíli: {e}")
     except Exception as e:
         log.error("Garmin login error: %s", e)
-        return "error"
+        return ("error", str(e))
 
 
 def login_mfa(otp_code):
+    """Returns 'ok' or ('error', msg)."""
     global _pending_api
     if not _pending_api:
-        return "error"
+        return ("error", "Žádná čekající MFA session.")
     try:
         _pending_api.login(otp_code=otp_code)
         _pending_api.garth.dump(_DATA_DIR)
@@ -161,7 +171,7 @@ def login_mfa(otp_code):
     except Exception as e:
         log.error("Garmin MFA error: %s", e)
         _pending_api = None
-        return "error"
+        return ("error", str(e))
 
 
 def is_connected():
