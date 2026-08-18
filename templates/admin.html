@@ -57,7 +57,11 @@
       <p>{{ archive_count }} aktivit ze Stravy (do 15.&#160;8.&#160;2026) je ulo&#382;eno jako statick&#253; archiv.</p>
     {% else %}
       <div class="status disconnected">Archiv chyb&#237;</div>
-      <p>Spus&#357; <code>python export_strava.py</code> lok&#225;ln&#283; a v&#253;sledn&#253; <code>strava_archive.json</code> commitni do repozit&#225;&#345;e.</p>
+      <p>Klikni na tla&#269;&#237;tko n&#237;&#382;e &mdash; sta&#382;en&#253; soubor pak commitni do repozit&#225;&#345;e.</p>
+      <div class="admin-actions">
+        <a href="/admin/export-strava" class="btn btn-secondary">&#8595; St&#225;hnout Strava archiv</a>
+      </div>
+      <p style="margin-top:.75rem;font-size:.8rem;color:#555">Po sta&#382;en&#237;: <code>git add strava_archive.json &amp;&amp; git commit -m "Add Strava archive" &amp;&amp; git push</code></p>
     {% endif %}
   </div>
 </body>

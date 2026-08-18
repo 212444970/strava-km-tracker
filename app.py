@@ -5,11 +5,12 @@ from functools import wraps
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for, Response
 
 import historical_store
 import strava_archive_store
 import garmin_client
+import strava_client
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
@@ -114,6 +115,27 @@ def admin_garmin_disconnect():
 def admin_refresh():
     garmin_client.clear_cache()
     return redirect(url_for("admin"))
+
+
+@app.route("/admin/export-strava")
+@admin_required
+def admin_export_strava():
+    """Download all Strava activities as strava_archive.json (run on Railway where tokens exist)."""
+    import json, token_store
+    tokens = token_store.load()
+    if not tokens:
+        return "Strava token not found on this server.", 503
+    activities = strava_client.get_activities(force=True)
+    if not activities:
+        return "No activities returned from Strava.", 503
+    CUTOFF = "2026-08-16"
+    archived = [a for a in activities if a["date"] < CUTOFF]
+    data = json.dumps(archived, ensure_ascii=False, indent=2)
+    return Response(
+        data,
+        mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=strava_archive.json"},
+    )
 
 
 if __name__ == "__main__":
