@@ -3,22 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Bike KM Tracker</title>
+  <title>Admin &#8212; Bike KM Tracker</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <header>
-    <h1>🚴 Admin</h1>
-    <a href="/" class="btn btn-ghost">← Public page</a>
+    <h1>&#128690; Admin</h1>
+    <a href="/" class="btn btn-ghost">&larr; Public page</a>
   </header>
 
-  <!-- Garmin -->
   <div class="admin-box">
     <h2>Garmin Connect</h2>
 
     {% if garmin_connected %}
-      <div class="status connected">Garmin připojen</div>
-      <p>Nové aktivity (od 16. 8. 2026) se načítají z Garmin Connect.</p>
+      <div class="status connected">Garmin p&#345;ipojen</div>
+      <p>Nov&#233; aktivity (od 16.&#160;8.&#160;2026) se na&#269;&#237;taj&#237; z Garmin Connect.</p>
       <div class="admin-actions">
         <form action="/admin/refresh" method="post">
           <button class="btn btn-secondary">Sync Garmin</button>
@@ -29,37 +28,40 @@
       </div>
 
     {% elif needs_mfa %}
-      <div class="status disconnected">Vyžadován MFA kód</div>
-      <p>Zadej jednorázový kód z Garmin autentizační aplikace.</p>
+      <div class="status disconnected">Vy&#382;adov&#225;n MFA k&#243;d</div>
+      <p>Zadej jednor&#225;zov&#253; k&#243;d z Garmin autentiza&#269;n&#237; aplikace.</p>
       <form action="/admin/garmin-mfa" method="post" class="login-form">
         <input type="text" name="code" placeholder="123456" maxlength="6" autocomplete="one-time-code" required />
         <button class="btn btn-strava" type="submit">Potvrdit</button>
       </form>
 
     {% else %}
-      <div class="status disconnected">Garmin nepřipojen</div>
+      <div class="status disconnected">Garmin nep&#345;ipojen</div>
       {% if garmin_error %}
         <p class="error-msg">{{ garmin_error }}</p>
       {% endif %}
-      <p>Přihlaš se ke Garmin Connect účtu. Session se uloží — přihlášení stačí jednou.</p>
+      <p>P&#345;ihla&#353; se ke Garmin Connect &#250;&#269;tu. Session se ulo&#382;&#237; &#8212; p&#345;ihl&#225;&#353;en&#237; sta&#269;&#237; jednou.</p>
       <form action="/admin/garmin-login" method="post" class="login-form">
         <input type="email" name="email" placeholder="email@example.com" required
                style="width:100%;max-width:280px;padding:.6rem 1rem;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#e8e8e8;font-size:1rem;outline:none;" />
         <input type="password" name="password" placeholder="Heslo" required />
-        <button class="btn btn-strava" type="submit">Přihlásit Garmin</button>
+        <button class="btn btn-strava" type="submit">P&#345;ihl&#225;sit Garmin</button>
       </form>
     {% endif %}
   </div>
 
-  <!-- Strava archive -->
   <div class="admin-box" style="margin-top:1.5rem">
     <h2>Strava archiv</h2>
     {% if archive_count > 0 %}
-      <div class="status connected">Archiv načten</div>
-      <p>{{ archive_count }} aktivit ze Stravy (do 15. 8. 2026) je uloženo jako statický archiv.</p>
+      <div class="status connected">Archiv na&#269;ten</div>
+      <p>{{ archive_count }} aktivit ze Stravy (do 15.&#160;8.&#160;2026) je ulo&#382;eno jako statick&#253; archiv.</p>
     {% else %}
-      <div class="status disconnected">Archiv chybí</div>
-      <p>Spusť <code>python export_strava.py</code> lokálně a výsledný <code>strava_archive.json</code> commitni do repozitáře.</p>
+      <div class="status disconnected">Archiv chyb&#237;</div>
+      <p>Klikni na tla&#269;&#237;tko n&#237;&#382;e &mdash; sta&#382;en&#253; soubor pak commitni do repozit&#225;&#345;e.</p>
+      <div class="admin-actions">
+        <a href="/admin/export-strava" class="btn btn-secondary">&#8595; St&#225;hnout Strava archiv</a>
+      </div>
+      <p style="margin-top:.75rem;font-size:.8rem;color:#555">Po sta&#382;en&#237;: <code>git add strava_archive.json &amp;&amp; git commit -m "Add Strava archive" &amp;&amp; git push</code></p>
     {% endif %}
   </div>
 </body>
