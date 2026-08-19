@@ -129,7 +129,7 @@ def login(email, password):
       ('error', msg)  — failed with reason string
     """
     if not _GARTH_AVAILABLE:
-        return ("error", "Knihovna garth není nainstalovaná.")
+        return ("error", "Knihovna garth není nainstalována.")
     try:
         garth.login(email, password)
         os.makedirs(_DATA_DIR, exist_ok=True)
