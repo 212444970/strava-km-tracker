@@ -119,6 +119,33 @@ def admin_refresh():
     return redirect(url_for("admin"))
 
 
+@app.route("/admin/upload-garmin-tokens", methods=["POST"])
+@admin_required
+def admin_upload_garmin_tokens():
+    import json
+    f = request.files.get("tokens_file")
+    if not f:
+        return "Žádný soubor.", 400
+    try:
+        export = json.load(f)
+    except Exception:
+        return "Neplatný JSON soubor.", 400
+    data_dir = os.environ.get("DATA_DIR", os.path.dirname(os.path.abspath(__file__)))
+    os.makedirs(data_dir, exist_ok=True)
+    saved = []
+    for fname, content in export.items():
+        if not fname.endswith(".json"):
+            continue
+        path = os.path.join(data_dir, fname)
+        with open(path, "w", encoding="utf-8") as out:
+            json.dump(content, out)
+        saved.append(fname)
+    if not saved:
+        return "Soubor neobsahuje žádné tokeny.", 400
+    garmin_client.clear_cache()
+    return redirect(url_for("admin"))
+
+
 @app.route("/admin/export-strava")
 @admin_required
 def admin_export_strava():
