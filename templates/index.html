@@ -42,7 +42,7 @@
 
 <!-- 4. Insighty (2024+) + posledních 5 aktivit -->
 <section class="chart-section">
-  <h2>Rekordy & insighty <span class="dim">(od 2024)</span></h2>
+  <h2>Rekordy &amp; insighty <span class="dim">(od 2024)</span></h2>
   <div id="insights"></div>
 </section>
 
@@ -52,7 +52,7 @@
 </section>
 
 <section class="rides-section">
-  <h2>Top 20 měsíců <span class="dim">(podle km)</span></h2>
+  <h2>Top 10 měsíců <span class="dim">(podle km)</span></h2>
   <div id="top-months"></div>
 </section>
 
@@ -87,14 +87,14 @@ const MONTH_COLORS = [
   '#6090e0', // Led – zimní modrá
   '#4878cc', // Úno – zimní modrá tmavší
   '#3a9a3a', // Bře – jarní zelená
-  '#6aaa28', // Dub – žlutozelená
+  '#6aaa28', // Dub – žlutoze lená
   '#a0b820', // Kvě – limetkově žlutá
   '#e8d820', // Čvn – žlutá
   '#f07020', // Čvc – oranžová
-  '#e04020', // Srp – červenooranžová
+  '#e04020', // Srp – červeno oranžová
   '#e09820', // Zář – zlatá
   '#c06820', // Říj – jantarová
-  '#904030', // Lis – hnědá
+  '#904030', // Lis – hndá
   '#5070c8', // Pro – zimní modrá
 ];
 const CAT_LABELS = {{ category_labels | tojson }};
@@ -102,7 +102,7 @@ const ALL = {{ activities | tojson }};
 
 let selCats = new Set();
 
-// ── Column navigation state ────────────────────────────────────────────────
+// ── Column navigation state ──────────────────────────────────────────────────────
 const _now0  = new Date();
 let dispYear     = _now0.getFullYear();
 let dispMonYear  = _now0.getFullYear();
@@ -119,7 +119,7 @@ function active() {
   return selCats.size === 0 ? ALL : ALL.filter(a => selCats.has(a.category));
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────────
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtDur(s) { const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}m`; }
@@ -132,7 +132,7 @@ function pct(cur, ref) {
   return `<span class="${cls}">${arr} ${sign}${p}%</span>`;
 }
 
-// ── 1. Current performance ────────────────────────────────────────────────────
+// ── 1. Current performance ─────────────────────────────────────────────────────────────
 
 function computeCurrent(rides) {
   const now=new Date();
@@ -219,11 +219,11 @@ function renderCurrent(c, vs) {
   document.getElementById('wk-next').onclick=()=>{if(dispWkOffset>0){dispWkOffset--;refresh();}};
 }
 
-// ── 2. Comparisons (merged into table) ───────────────────────────────────────
+// ── 2. Comparisons (merged into table) ───────────────────────────────────────────────────
 
 function computeVs(rides) {
   const now=new Date(), cutM=now.getMonth()+1, cutD=now.getDate();
-  const isCom=r=>{const n=r.name.toLowerCase();return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů'));};
+  const isCom=r=>{const n=r.name.toLowerCase();return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů'));}
   const KEYS=['km','elev','cnt','dur','cKm','cElev','cCnt','cDur'];
   const zero=()=>Object.fromEntries(KEYS.map(k=>[k,0]));
   const roundK=o=>{for(const k of KEYS)o[k]=(k==='km'||k==='cKm')?r1(o[k]):Math.round(o[k]);return o;};
@@ -271,7 +271,7 @@ function computeVs(rides) {
   };
 }
 
-// ── Run rate (unchanged) ──────────────────────────────────────────────────────
+// ── Run rate (unchanged) ───────────────────────────────────────────────────────────────
 
 function computeRunRate(rides) {
   const now=new Date(), curYear=String(now.getFullYear()), curMon=now.getMonth();
@@ -294,26 +294,24 @@ function computeRunRate(rides) {
   return {projected:seasonal,linear,seasonal,actualYr:Math.round(actualYr)};
 }
 
-// ── 3. Charts (unchanged) ─────────────────────────────────────────────────────
+// ── 3. Charts (unchanged) ─────────────────────────────────────────────────────────────────
 
 function computeMonthly(rides) {
   const now=new Date(), curYear=String(now.getFullYear()), curMon=now.getMonth();
   const byYear={};
   for (const r of rides) { const y=r.date.slice(0,4),m=+r.date.slice(5,7)-1; if(!byYear[y])byYear[y]=Array(12).fill(0); byYear[y][m]+=r.km; }
-  const pastEntries=Object.entries(byYear).filter(([y])=>y<curYear);
-  const past=pastEntries.map(([,ms])=>ms);
-  const pastYears=pastEntries.map(([y])=>y);
+  const past=Object.entries(byYear).filter(([y])=>y<curYear).map(([,ms])=>ms);
   const curData=(byYear[curYear]||Array(12).fill(0)).map(v=>r1(v));
-  const avg=Array(12).fill(0),max=Array(12).fill(0),maxYear=Array(12).fill('');
-  if (past.length) { for (let m=0;m<12;m++) { const v=past.map(y=>y[m]); avg[m]=Math.round(v.reduce((a,b)=>a+b,0)/past.length); const mx=Math.max(...v); max[m]=Math.round(mx); maxYear[m]=pastYears[v.indexOf(mx)]; } }
-  return {curYear,curMon,curData,avg,max,maxYear,hasPast:past.length>0};
+  const avg=Array(12).fill(0),max=Array(12).fill(0);
+  if (past.length) { for (let m=0;m<12;m++) { const v=past.map(y=>y[m]); avg[m]=Math.round(v.reduce((a,b)=>a+b,0)/past.length); max[m]=Math.round(Math.max(...v)); } }
+  return {curYear,curMon,curData,avg,max,hasPast:past.length>0};
 }
 
 function renderMonthly(d) {
   document.getElementById('chart-year-lbl').textContent=d.curYear;
   const legend=document.getElementById('monthly-legend');
   legend.innerHTML=d.hasPast?`<span class="leg-item"><span class="leg-avg"></span>průměr</span><span class="leg-item"><span class="leg-max"></span>max</span>`:'';
-  const maxVal=Math.max(...d.curData,...d.avg,...d.max,1);
+  const maxVal=Math.max(...d.curData,...d.avg,1);
   let html='';
   for (let m=0;m<12;m++) {
     const val=d.curData[m],avgV=d.avg[m],maxV=d.max[m],future=m>d.curMon;
@@ -322,7 +320,7 @@ function renderMonthly(d) {
       <div class="bar-wrap">
         <div class="bar-track"><div class="bar-fill${future?' bar-dim':''}" style="width:${val/maxVal*100}%;${future?'':'background:'+MONTH_COLORS[m]}"></div></div>
         ${d.hasPast&&avgV>0?`<div class="bar-avg-mk" style="left:${avgV/maxVal*100}%" title="Průměr: ${avgV} km"></div>`:''}
-        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%"></div><span class="bar-max-label" style="left:${maxV/maxVal*100}%">${maxV} km · ${d.maxYear[m]}</span>`:''}
+        ${d.hasPast&&maxV>0?`<div class="bar-max-mk" style="left:${maxV/maxVal*100}%" title="Max: ${maxV} km"></div>`:''}
       </div>
       <span class="bar-value">${val>0?val:`<span class="dim">–</span>`}${d.hasPast&&avgV>0?` <span class="dim">/ ${avgV}</span>`:''}</span>
     </div>`;
@@ -351,7 +349,7 @@ function renderYearly(rows) {
   document.getElementById('yearly-chart').innerHTML=html||'<p class="empty">Žádná data.</p>';
 }
 
-// ── 4. Insights (2024+) ───────────────────────────────────────────────────────
+// ── 4. Insights (2024+) ─────────────────────────────────────────────────────────────────
 
 function computeInsights(rides) {
   if (!rides.length) return null;
@@ -405,10 +403,10 @@ function renderRides(rides) {
   el.innerHTML=html+'</tbody></table>';
 }
 
-// ── Top lists ─────────────────────────────────────────────────────────────────
+// ── Top lists ─────────────────────────────────────────────────────────────────────────────
 
 function computeTopMonths(rides) {
-  const isCom=r=>{const n=r.name.toLowerCase();return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů'));};
+  const isCom=r=>{const n=r.name.toLowerCase();return (r.category==='road'||r.category==='mtb')&&(n.includes('do práce')||n.includes('domů'));}
   const byMonth={};
   for (const r of rides) {
     const ym=r.date.slice(0,7);
@@ -423,15 +421,15 @@ function computeTopMonths(rides) {
                      cKm:r1(d.cKm),cElev:Math.round(d.cElev),cDur:Math.round(d.cDur)}))
     .sort((a,b)=>b.km-a.km);
   all.forEach((r,i)=>r.rank=i+1);
-  const top20=all.slice(0,20);
+  const top10=all.slice(0,10);
   const cur=all.find(r=>r.ym===curYm);
-  const curInTop=top20.some(r=>r.ym===curYm);
-  return {top20, cur: (!curInTop&&cur)?cur:null};
+  const curInTop=top10.some(r=>r.ym===curYm);
+  return {top10, cur: (!curInTop&&cur)?cur:null};
 }
 
-function renderTopMonths({top20, cur}) {
+function renderTopMonths({top10, cur}) {
   const el=document.getElementById('top-months'); if (!el) return;
-  if (!top20.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
+  if (!top10.length) { el.innerHTML='<p class="empty">Žádná data.</p>'; return; }
   const MEDALS=['🥇','🥈','🥉'];
   const rankLbl=r=>r.rank<=3?`<span style="font-size:1rem">${MEDALS[r.rank-1]}</span>`:`${r.rank}.`;
   const avgSpd=r=>r.dur>0?r1(r.km/(r.dur/3600))+' km/h':'–';
@@ -444,7 +442,7 @@ function renderTopMonths({top20, cur}) {
       <td class="num">${r.dur>0?fmtDur(r.dur):'–'}</td>
       <td class="num">${r.cnt}</td>
     </tr>`;
-  for (const r of top20) html+=rowHtml(r,'');
+  for (const r of top10) html+=rowHtml(r,'');
   if (cur) html+=`<tr><td colspan="7" style="padding:0.3rem 0.7rem;color:#444;font-size:0.7rem;border-top:1px solid #252525">Aktuální měsíc</td></tr>`+rowHtml(cur,' style="opacity:0.6"');
   el.innerHTML=html+'</tbody></table></div>';
 }
@@ -581,7 +579,7 @@ function renderTopMonthsByDur(rows) {
   el.innerHTML=html+'</tbody></table></div>';
 }
 
-// ── Filter ────────────────────────────────────────────────────────────────────
+// ── Filter ──────────────────────────────────────────────────────────────────────────────
 
 function initFilter() {
   // Default: road + mtb if available, otherwise all
@@ -598,7 +596,7 @@ function initFilter() {
   });
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────────────
 
 function refresh() {
   const rides=active();
