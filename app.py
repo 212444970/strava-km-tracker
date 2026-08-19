@@ -39,7 +39,7 @@ def _load_all_activities():
 
 @app.route("/")
 def index():
-    if not garmin_client.is_connected() and not strava_archive_store.load():
+    if not garmin_client.is_connected() and not strava_archive_store.load() and not historical_store.load():
         return render_template("index.html", connected=False)
     activities = _load_all_activities()
     return render_template(
