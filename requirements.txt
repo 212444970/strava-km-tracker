@@ -2,5 +2,4 @@ flask>=3.0
 requests>=2.31
 python-dotenv>=1.0
 gunicorn>=21.0
-garminconnect>=0.2.19
 garth>=0.4

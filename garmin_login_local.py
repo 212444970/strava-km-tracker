@@ -3,7 +3,7 @@ Run this script LOCALLY (not on Railway) to export Garmin tokens.
 Railway's shared IP is rate-limited by Garmin, so login must happen locally.
 
 Usage:
-    pip install garminconnect garth
+    pip install garth
     python garmin_login_local.py
 
 Then upload the generated garmin_tokens_export.json via the Admin panel.
@@ -15,33 +15,38 @@ import tempfile
 
 def main():
     try:
-        from garminconnect import Garmin
+        import garth
     except ImportError:
-        print("Missing dependency. Run: pip install garminconnect garth")
+        print("Missing dependency. Run: pip install garth")
         return
 
     email = input("Garmin email: ").strip()
     password = input("Garmin heslo: ").strip()
 
-    api = Garmin(email=email, password=password, is_cn=False)
-
     try:
-        api.login()
-    except Exception as e:
-        msg = str(e)
-        if "MFA" in msg or "OTP" in msg or "NEED" in msg:
-            otp = input("MFA kód (z Garmin aplikace): ").strip()
-            try:
-                api.login(otp_code=otp)
-            except Exception as e2:
-                print(f"MFA selhalo: {e2}")
+        garth.login(email, password, prompt_mfa=lambda: input("MFA kód (z Garmin aplikace): ").strip())
+    except TypeError:
+        # Older garth without prompt_mfa support
+        try:
+            garth.login(email, password)
+        except Exception as e:
+            msg = str(e)
+            if "MFA" in msg or "OTP" in msg or "NEED" in msg:
+                otp = input("MFA kód (z Garmin aplikace): ").strip()
+                try:
+                    garth.login(email, password, otp_code=otp)
+                except Exception as e2:
+                    print(f"MFA selhalo: {e2}")
+                    return
+            else:
+                print(f"Přihlášení selhalo: {e}")
                 return
-        else:
-            print(f"Přihlášení selhalo: {e}")
-            return
+    except Exception as e:
+        print(f"Přihlášení selhalo: {e}")
+        return
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        api.garth.dump(tmpdir)
+        garth.save(tmpdir)
 
         export = {}
         for fname in os.listdir(tmpdir):
