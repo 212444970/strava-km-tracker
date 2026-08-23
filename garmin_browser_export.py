@@ -109,12 +109,12 @@ def fetch_activities(cookie_rows):
         "Referer": "https://connect.garmin.com/modern/activities",
     })
 
-    today = date.today().isoformat()
     all_raw = []
     start = 0
     limit = 100
 
     # Web app proxies API calls through /proxy/
+    # Note: startDate/endDate are ignored by the proxy — filter by date in Python instead
     BASE_URL = "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities"
 
     while True:
@@ -122,8 +122,6 @@ def fetch_activities(cookie_rows):
         resp = session.get(
             BASE_URL,
             params={
-                "startDate": CUTOFF,
-                "endDate": today,
                 "start": start,
                 "limit": limit,
             },
@@ -140,6 +138,10 @@ def fetch_activities(cookie_rows):
         if not batch:
             break
         all_raw.extend(batch)
+        # Stop paginating once we've gone past the cutoff date
+        oldest = (batch[-1].get("startTimeLocal") or "")[:10]
+        if oldest and oldest < CUTOFF:
+            break
         if len(batch) < limit:
             break
         start += limit
@@ -155,8 +157,10 @@ def map_activities(all_raw):
         elev = round(a.get("elevationGain") or 0)
         if km == 0 and elev == 0:
             continue
-        moving = int(a.get("movingDuration") or a.get("duration") or 0)
         date_str = (a.get("startTimeLocal") or "")[:10]
+        if date_str < CUTOFF:
+            continue
+        moving = int(a.get("movingDuration") or a.get("duration") or 0)
         activities.append({
             "name": a.get("activityName") or sport,
             "date": date_str,
