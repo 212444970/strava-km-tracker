@@ -106,9 +106,38 @@ def test_auth(cookies_dict):
     print(f"Auth test -> HTTP {resp.status_code}, prvnich 200 znaku: {resp.text[:200]}")
 
 
+def _try_fetch_page(url, params, headers, cookies_dict):
+    """Fetch one page; return (batch_list, raw_text) or sys.exit on error."""
+    resp = requests.get(url, params=params, headers=headers, cookies=cookies_dict)
+    if resp.status_code in (401, 403):
+        print("CHYBA: Session vyprsela nebo nejsi prihlaseny.")
+        sys.exit(1)
+    if resp.status_code != 200:
+        print(f"CHYBA: HTTP {resp.status_code}")
+        print(resp.text[:500])
+        sys.exit(1)
+    try:
+        data = resp.json()
+    except Exception:
+        print(f"  Odpoved neni JSON: {resp.text[:300]}")
+        return None, resp.text
+    if isinstance(data, list):
+        return data, resp.text
+    if isinstance(data, dict):
+        batch = data.get("activityList") or data.get("activities") or data.get("data") or []
+        if not batch and data:
+            print(f"  JSON objekt s klici: {list(data.keys())}")
+        return batch, resp.text
+    return [], resp.text
+
+
 def fetch_activities(cookies_dict):
     test_auth(cookies_dict)
-    headers = {
+
+    jwt_web = cookies_dict.get("JWT_WEB", "")
+    print(f"  JWT_WEB: {'nalezen, zacina ' + jwt_web[:10] + '...' if jwt_web else 'CHYBI'}")
+
+    base_headers = {
         "NK": "NT",
         "X-app-ver": "4.66.1.0",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0",
@@ -117,56 +146,50 @@ def fetch_activities(cookies_dict):
         "Referer": "https://connect.garmin.com/modern/activities",
     }
 
+    # Try 3 strategies in order:
+    # 1. /proxy/ with Bearer token
+    # 2. connectapi.garmin.com with Bearer token (newer endpoint)
+    # 3. /proxy/ without Bearer (original)
+    strategies = [
+        (
+            "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
+            {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None,
+        ),
+        (
+            "https://connectapi.garmin.com/activitylist-service/activities/search/activities",
+            {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None,
+        ),
+        (
+            "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
+            base_headers,
+        ),
+    ]
+
+    for url, headers in strategies:
+        if headers is None:
+            continue
+        print(f"  Zkousim: {url} ({'s' if 'Authorization' in headers else 'bez'} Bearer)")
+        batch, raw = _try_fetch_page(url, {"start": 0, "limit": 1}, headers, cookies_dict)
+        if batch:
+            print(f"  Funguje! Pouzivam tuto strategii.")
+            break
+        print(f"  -> Prazdna odpoved: {raw[:100]}")
+    else:
+        print("CHYBA: Zadna strategie nefunguje. Viz vystup vyse.")
+        sys.exit(1)
+
+    # Now fetch all pages with the working url/headers
     all_raw = []
     start = 0
     limit = 100
 
-    # Web app proxies API calls through /proxy/
-    # startDate/endDate are ignored by the proxy — filter by CUTOFF date in Python instead
-    BASE_URL = "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities"
-
     while True:
         print(f"  Stahuji aktivity {start}-{start + limit}...")
-        resp = requests.get(
-            BASE_URL,
-            params={"start": start, "limit": limit},
-            headers=headers,
-            cookies=cookies_dict,
-        )
-        if resp.status_code in (401, 403):
-            print("CHYBA: Session vyprsela nebo nejsi prihlaseny.")
-            print("Jdi v Firefoxu na connect.garmin.com, prihlas se a spust znovu.")
-            sys.exit(1)
-        if resp.status_code != 200:
-            print(f"CHYBA: HTTP {resp.status_code}")
-            print(resp.text[:500])
-            sys.exit(1)
-        # Debug: show redirect and content type
-        if resp.url != BASE_URL + "?start=" + str(start) + "&limit=" + str(limit):
-            print(f"  Presmerovano na: {resp.url}")
-        print(f"  Content-Type: {resp.headers.get('Content-Type','?')}")
-        try:
-            data = resp.json()
-        except Exception:
-            print(f"  Odpoved neni JSON: {resp.text[:300]}")
-            sys.exit(1)
-        # Handle both array format (mobile API) and object format (web API)
-        if isinstance(data, list):
-            batch = data
-        elif isinstance(data, dict):
-            # Try known wrapper keys
-            batch = data.get("activityList") or data.get("activities") or data.get("data") or []
-            if not batch and data:
-                print(f"  JSON objekt s klici: {list(data.keys())}")
-                print(f"  Prvnich 500 znaku: {resp.text[:500]}")
-                sys.exit(1)
-        else:
-            batch = []
+        batch, raw = _try_fetch_page(url, {"start": start, "limit": limit}, headers, cookies_dict)
         if not batch:
-            print(f"  Prazdna odpoved: {resp.text[:200]}")
+            print(f"  Prazdna odpoved: {raw[:100]}")
             break
         all_raw.extend(batch)
-        # Stop once we've gone past the cutoff date
         oldest = (batch[-1].get("startTimeLocal") or "")[:10]
         if oldest and oldest < CUTOFF:
             break
