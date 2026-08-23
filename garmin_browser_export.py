@@ -144,53 +144,54 @@ def fetch_activities(cookies_dict):
     jwt_web = cookies_dict.get("JWT_WEB", "")
     print(f"  JWT_WEB: {'nalezen, zacina ' + jwt_web[:10] + '...' if jwt_web else 'CHYBI'}")
 
-    PROXY = "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities"
-
     base_headers = {
         "NK": "NT",
         "X-app-ver": "4.66.1.0",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0",
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
-        "Referer": "https://connect.garmin.com/modern/activities",
+        "Referer": "https://connect.garmin.com/activities",
         "Origin": "https://connect.garmin.com",
     }
-    headers_bearer = {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None
-    headers_plain = base_headers
-    headers_no_nk = {k: v for k, v in base_headers.items() if k != "NK"}
+    bearer_hdr = {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None
 
     base_params = {"start": 0, "limit": 1}
-    params_with_user = {**base_params, "displayName": display_name} if display_name else None
+    user_params = {**base_params, "displayName": display_name} if display_name else None
 
-    # Try strategies in order — first one that returns data wins
-    strategies = []
-    if params_with_user:
-        strategies += [
-            (PROXY, params_with_user, headers_plain,  "cookies + displayName"),
-            (PROXY, params_with_user, headers_bearer, "Bearer + displayName") if headers_bearer else None,
-            (PROXY, params_with_user, headers_no_nk,  "no-NK + displayName"),
-        ]
-    strategies += [
-        (PROXY, base_params, headers_plain,  "cookies only"),
-        (PROXY, base_params, headers_bearer, "Bearer only") if headers_bearer else None,
-        (PROXY, base_params, headers_no_nk,  "no-NK"),
+    # Candidate URLs — the old /proxy/ path and the newer /api/proxy/ path used by the React app
+    candidate_urls = [
+        "https://connect.garmin.com/api/proxy/activitylist-service/activities/search/activities",
+        "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
+        "https://connect.garmin.com/api/proxy/activity-service/activities",
+        "https://connect.garmin.com/proxy/activity-service/activities",
     ]
-    strategies = [s for s in strategies if s is not None]
 
-    url = PROXY
-    headers = headers_plain
+    strategies = []
+    for cu in candidate_urls:
+        if user_params:
+            strategies.append((cu, user_params, base_headers, f"cookies+user {cu.split('garmin.com')[1][:40]}"))
+            if bearer_hdr:
+                strategies.append((cu, user_params, bearer_hdr, f"bearer+user {cu.split('garmin.com')[1][:40]}"))
+        strategies.append((cu, base_params, base_headers, f"cookies {cu.split('garmin.com')[1][:40]}"))
+        if bearer_hdr:
+            strategies.append((cu, base_params, bearer_hdr, f"bearer {cu.split('garmin.com')[1][:40]}"))
+
+    url = candidate_urls[1]
+    headers = base_headers
+    params = base_params
     for url, params, hdr, label in strategies:
-        print(f"  Zkousim [{label}]: {url}")
+        print(f"  Zkousim [{label}]")
         batch, raw = _try_fetch_page(url, params, hdr, cookies_dict)
         if batch:
             print(f"  Funguje! Pouzivam [{label}].")
             headers = hdr
             break
-        print(f"  -> {raw[:120]}")
+        print(f"  -> {raw[:80]}")
     else:
-        print("CHYBA: Zadna strategie nefunguje.")
-        print("Postup: otevri Firefox, jdi na connect.garmin.com/modern/activities,")
-        print("stiskni F12 -> Network -> filtr 'activitylist' -> zkopiruj URL a headers.")
+        print("\nCHYBA: Zadna strategie nefunguje.")
+        print("Otevri Firefox, jdi na connect.garmin.com/activities,")
+        print("F12 -> Network -> zalozka 'XHR' -> nacti stranku -> klikni na prvni")
+        print("request co vraci JSON s aktivitami -> zkopiruj URL a vloz sem.")
         sys.exit(1)
 
     # Build base params for the working strategy (keep displayName if it was part of it)
