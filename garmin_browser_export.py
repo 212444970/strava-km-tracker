@@ -129,9 +129,29 @@ def fetch_activities(cookies_dict):
             print(f"CHYBA: HTTP {resp.status_code}")
             print(resp.text[:500])
             sys.exit(1)
-        batch = resp.json()
+        # Debug: show redirect and content type
+        if resp.url != BASE_URL + "?start=" + str(start) + "&limit=" + str(limit):
+            print(f"  Presmerovano na: {resp.url}")
+        print(f"  Content-Type: {resp.headers.get('Content-Type','?')}")
+        try:
+            data = resp.json()
+        except Exception:
+            print(f"  Odpoved neni JSON: {resp.text[:300]}")
+            sys.exit(1)
+        # Handle both array format (mobile API) and object format (web API)
+        if isinstance(data, list):
+            batch = data
+        elif isinstance(data, dict):
+            # Try known wrapper keys
+            batch = data.get("activityList") or data.get("activities") or data.get("data") or []
+            if not batch and data:
+                print(f"  JSON objekt s klici: {list(data.keys())}")
+                print(f"  Prvnich 500 znaku: {resp.text[:500]}")
+                sys.exit(1)
+        else:
+            batch = []
         if not batch:
-            print(f"  Prazdna odpoved. Prvnich 200 znaku raw: {resp.text[:200]}")
+            print(f"  Prazdna odpoved: {resp.text[:200]}")
             break
         all_raw.extend(batch)
         # Stop once we've gone past the cutoff date
