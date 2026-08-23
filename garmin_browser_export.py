@@ -45,8 +45,6 @@ CATEGORY_MAP = {
 
 def find_firefox_cookies():
     """Return path to Firefox cookies.sqlite (Windows/Mac/Linux)."""
-    candidates = []
-
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA", "")
         candidates = glob.glob(
@@ -62,12 +60,11 @@ def find_firefox_cookies():
         candidates = glob.glob(
             os.path.join(home, ".mozilla", "firefox", "*.default*", "cookies.sqlite")
         )
-
     return candidates[0] if candidates else None
 
 
 def get_garmin_cookies():
-    """Read Garmin cookies from Firefox profile."""
+    """Read Garmin cookies from Firefox profile, preserving original host."""
     path = find_firefox_cookies()
     if not path:
         print("CHYBA: Firefox profil nenalezen.")
@@ -89,24 +86,27 @@ def get_garmin_cookies():
     finally:
         os.unlink(tmp_path)
 
-    cookies = {name: value for name, value, host in rows}
-    print(f"Nalezeno {len(cookies)} Garmin cookies.")
-    if not cookies:
-        print("CHYBA: Zadne Garmin cookies. Zkontroluj, ze jsi prihlaseny v Firefoxu na connect.garmin.com.")
+    print(f"Nalezeno {len(rows)} Garmin cookies.")
+    if not rows:
+        print("CHYBA: Zadne Garmin cookies.")
+        print("Jdi v Firefoxu na connect.garmin.com, prihlas se a zkus znovu.")
         sys.exit(1)
-    return cookies
+    return rows  # list of (name, value, host)
 
 
-def fetch_activities(cookies):
+def fetch_activities(cookie_rows):
     session = requests.Session()
-    for name, value in cookies.items():
-        session.cookies.set(name, value, domain=".garmin.com")
+    for name, value, host in cookie_rows:
+        # Use host exactly as Firefox stored it (.garmin.com or connect.garmin.com)
+        session.cookies.set(name, value, domain=host)
 
-    # Garmin Connect expects this header
     session.headers.update({
         "NK": "NT",
         "X-app-ver": "4.66.1.0",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": "https://connect.garmin.com/modern/activities",
     })
 
     today = date.today().isoformat()
@@ -114,10 +114,13 @@ def fetch_activities(cookies):
     start = 0
     limit = 100
 
+    # Web app proxies API calls through /proxy/
+    BASE_URL = "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities"
+
     while True:
         print(f"  Stahuji aktivity {start}–{start + limit}...")
         resp = session.get(
-            "https://connect.garmin.com/activitylist-service/activities/search/activities",
+            BASE_URL,
             params={
                 "startDate": CUTOFF,
                 "endDate": today,
@@ -125,10 +128,14 @@ def fetch_activities(cookies):
                 "limit": limit,
             },
         )
-        if resp.status_code == 401:
-            print("CHYBA: Session vyprsela nebo nejsi prihlaseny. Obnov prihlaseni v Firefoxu na connect.garmin.com a zkus znovu.")
+        if resp.status_code in (401, 403):
+            print("CHYBA: Session vyprsela nebo nejsi prihlaseny.")
+            print("Jdi v Firefoxu na connect.garmin.com, prihlas se a spust skript znovu.")
             sys.exit(1)
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            print(f"CHYBA: HTTP {resp.status_code}")
+            print(resp.text[:500])
+            sys.exit(1)
         batch = resp.json()
         if not batch:
             break
@@ -165,9 +172,9 @@ def map_activities(all_raw):
 
 
 def main():
-    cookies = get_garmin_cookies()
+    cookie_rows = get_garmin_cookies()
     print("Stahuji aktivity z Garmin Connect...")
-    all_raw = fetch_activities(cookies)
+    all_raw = fetch_activities(cookie_rows)
     print(f"Stazeno {len(all_raw)} zaznamu.")
     activities = map_activities(all_raw)
     print(f"Zpracovano {len(activities)} aktivit (bez nulovych).")
