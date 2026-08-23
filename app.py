@@ -70,6 +70,7 @@ def admin():
         "admin.html",
         garmin_connected=garmin_client.is_connected(),
         archive_count=len(strava_archive_store.load()),
+        garmin_archive_count=len(garmin_archive_store.load()),
     )
 
 
@@ -85,11 +86,13 @@ def admin_garmin_login():
         return render_template("admin.html",
                                garmin_connected=False,
                                archive_count=len(strava_archive_store.load()),
+                               garmin_archive_count=len(garmin_archive_store.load()),
                                needs_mfa=True)
     _, msg = result
     return render_template("admin.html",
                            garmin_connected=False,
                            archive_count=len(strava_archive_store.load()),
+                           garmin_archive_count=len(garmin_archive_store.load()),
                            garmin_error=msg)
 
 
@@ -104,6 +107,7 @@ def admin_garmin_mfa():
     return render_template("admin.html",
                            garmin_connected=False,
                            archive_count=len(strava_archive_store.load()),
+                           garmin_archive_count=len(garmin_archive_store.load()),
                            garmin_error=msg)
 
 

@@ -74,5 +74,18 @@
       <p style="margin-top:.75rem;font-size:.8rem;color:#555">Po sta&#382;en&#237;: <code>git add strava_archive.json &amp;&amp; git commit -m "Add Strava archive" &amp;&amp; git push</code></p>
     {% endif %}
   </div>
+
+  <div class="admin-box" style="margin-top:1.5rem">
+    <h2>Garmin archiv <span style="font-size:.8rem;font-weight:normal;color:#888">(od 16.&#160;8.&#160;2026)</span></h2>
+    {% if garmin_archive_count > 0 %}
+      <div class="status connected">Archiv na&#269;ten</div>
+      <p>{{ garmin_archive_count }} aktivit z Garminu je ulo&#382;eno jako statick&#253; archiv.</p>
+      <p style="font-size:.85rem;color:#aaa">Aktualizace: spus&#357; <code>python garmin_browser_export.py</code> lok&#225;ln&#283;, pak commitni a pushni <code>garmin_archive.json</code>.</p>
+    {% else %}
+      <div class="status disconnected">Archiv chyb&#237;</div>
+      <p style="font-size:.85rem;color:#aaa">Spus&#357; lok&#225;ln&#283;: <code>python garmin_browser_export.py</code><br>
+      Pak: <code>git add garmin_archive.json &amp;&amp; git commit -m "Add Garmin archive" &amp;&amp; git push</code></p>
+    {% endif %}
+  </div>
 </body>
 </html>
