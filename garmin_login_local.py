@@ -26,7 +26,6 @@ def main():
     try:
         garth.login(email, password, prompt_mfa=lambda: input("MFA kód (z Garmin aplikace): ").strip())
     except TypeError:
-        # Older garth without prompt_mfa support
         try:
             garth.login(email, password)
         except Exception as e:

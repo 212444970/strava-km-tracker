@@ -5,6 +5,7 @@ Reads STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, STRAVA_REFRESH_TOKEN from env,
 fetches all rides, and writes public/index.html.
 """
 
+import json
 import os
 import sys
 from datetime import datetime, timezone, timedelta
@@ -87,6 +88,136 @@ def format_duration(seconds):
     return f"{h}h {m:02d}m" if h else f"{m}m"
 
 
+def compute_monthly(rides):
+    from collections import defaultdict
+    monthly = defaultdict(float)
+    for r in rides:
+        monthly[r["date"][:7]] += r["km"]
+    sorted_items = sorted(monthly.items())
+    cal_max = {}
+    for ym, km in sorted_items:
+        m = ym[5:7]
+        if m not in cal_max or km > cal_max[m][1]:
+            cal_max[m] = (ym, km)
+    record_yms = {v[0] for v in cal_max.values()}
+    top_20 = sorted(monthly.items(), key=lambda x: x[1], reverse=True)[:20]
+    return sorted_items, top_20, record_yms
+
+
+def monthly_chart_html(monthly_items, record_yms):
+    MONTHS_CS = ["Led", "Úno", "Bře", "Dub", "Kvě", "Čvn", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"]
+    data_js = json.dumps([
+        {"ym": ym, "km": round(km, 1), "rec": ym in record_yms}
+        for ym, km in monthly_items
+    ])
+    months_js = json.dumps(MONTHS_CS)
+    return """
+  <section class="chart-section">
+    <h2>Km za měsíc</h2>
+    <div class="chart-wrap">
+      <canvas id="mc"></canvas>
+      <div id="mc-tip" class="chart-tip"></div>
+    </div>
+    <script>
+    (function() {
+      var MONTHS = """ + months_js + """;
+      var data = """ + data_js + """;
+      var canvas = document.getElementById('mc');
+      var tip = document.getElementById('mc-tip');
+      var PAD = {l: 44, r: 8, t: 14, b: 28};
+      var H = 220;
+
+      function draw() {
+        var dpr = window.devicePixelRatio || 1;
+        var W = canvas.parentElement.clientWidth;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        var cw = W - PAD.l - PAD.r;
+        var ch = H - PAD.t - PAD.b;
+        var n = data.length;
+        var maxKm = Math.max.apply(null, data.map(function(d) { return d.km; }));
+        var slot = cw / n;
+        var bw = Math.max(1, slot * 0.82);
+
+        for (var i = 0; i <= 4; i++) {
+          var y = PAD.t + ch - ch * i / 4;
+          ctx.strokeStyle = '#2a2a2a';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cw, y); ctx.stroke();
+          ctx.fillStyle = '#555';
+          ctx.font = '10px system-ui';
+          ctx.textAlign = 'right';
+          ctx.fillText(Math.round(maxKm * i / 4), PAD.l - 4, y + 3.5);
+        }
+
+        data.forEach(function(d, i) {
+          var x = PAD.l + i * slot + (slot - bw) / 2;
+          var bh = Math.max(1, ch * d.km / maxKm);
+          ctx.fillStyle = d.rec ? '#fc4c02' : '#3a7bc8';
+          ctx.fillRect(x, PAD.t + ch - bh, bw, bh);
+        });
+
+        var lastYr = '';
+        ctx.fillStyle = '#555';
+        ctx.font = '10px system-ui';
+        ctx.textAlign = 'center';
+        data.forEach(function(d, i) {
+          var yr = d.ym.slice(0, 4);
+          if ((d.ym.slice(5) === '01' || i === 0) && yr !== lastYr) {
+            lastYr = yr;
+            ctx.fillText(yr, PAD.l + i * slot + slot / 2, H - PAD.b + 11);
+          }
+        });
+      }
+
+      draw();
+      window.addEventListener('resize', draw);
+
+      canvas.addEventListener('mousemove', function(e) {
+        var rect = canvas.getBoundingClientRect();
+        var W = parseFloat(canvas.style.width);
+        var cw = W - PAD.l - PAD.r;
+        var n = data.length;
+        var i = Math.floor((e.clientX - rect.left - PAD.l) / (cw / n));
+        if (i >= 0 && i < n) {
+          var d = data[i];
+          var mn = MONTHS[parseInt(d.ym.slice(5, 7)) - 1];
+          tip.textContent = mn + ' ' + d.ym.slice(0, 4) + ': ' + d.km + ' km' + (d.rec ? ' ★' : '');
+          tip.style.left = Math.min(PAD.l + i * (cw / n), W - 160) + 'px';
+          tip.style.top = '4px';
+          tip.style.opacity = '1';
+        } else {
+          tip.style.opacity = '0';
+        }
+      });
+
+      canvas.addEventListener('mouseleave', function() { tip.style.opacity = '0'; });
+    })();
+    </script>
+  </section>"""
+
+
+def top_months_html(top_20):
+    MONTHS_CS = ["Led", "Úno", "Bře", "Dub", "Kvě", "Čvn", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"]
+    rows = ""
+    for i, (ym, km) in enumerate(top_20, 1):
+        m = MONTHS_CS[int(ym[5:7]) - 1]
+        rows += f"      <tr><td class='num'>{i}.</td><td>{m} {ym[:4]}</td><td class='num'>{round(km, 1)} km</td></tr>\n"
+    return f"""
+  <section class="chart-section">
+    <h2>Top 20 měsíců</h2>
+    <table class="top-months">
+      <thead><tr><th>#</th><th>Měsíc</th><th>km</th></tr></thead>
+      <tbody>
+{rows}      </tbody>
+    </table>
+  </section>"""
+
+
 # ---------------------------------------------------------------------------
 # HTML generation
 # ---------------------------------------------------------------------------
@@ -110,6 +241,9 @@ def ride_rows(rides):
 
 def render(stats, rides):
     built_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    monthly_items, top_20, record_yms = compute_monthly(rides)
+    chart = monthly_chart_html(monthly_items, record_yms)
+    top = top_months_html(top_20)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,6 +295,8 @@ def render(stats, rides):
       </tbody>
     </table>
   </section>
+{chart}
+{top}
 </body>
 </html>"""
 
