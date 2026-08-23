@@ -97,13 +97,20 @@ def get_garmin_cookies():
 
 
 def test_auth(cookies_dict):
-    """Quick auth test against a simple endpoint."""
+    """Quick auth test; returns display_name for use in activity queries."""
     resp = requests.get(
         "https://connect.garmin.com/modern/currentuser-service/user/info",
         headers={"NK": "NT", "User-Agent": "Mozilla/5.0"},
         cookies=cookies_dict,
     )
     print(f"Auth test -> HTTP {resp.status_code}, prvnich 200 znaku: {resp.text[:200]}")
+    try:
+        info = resp.json()
+        display_name = info.get("username") or info.get("displayName") or ""
+        print(f"  displayName: {display_name}")
+        return display_name
+    except Exception:
+        return ""
 
 
 def _try_fetch_page(url, params, headers, cookies_dict):
@@ -132,10 +139,12 @@ def _try_fetch_page(url, params, headers, cookies_dict):
 
 
 def fetch_activities(cookies_dict):
-    test_auth(cookies_dict)
+    display_name = test_auth(cookies_dict)
 
     jwt_web = cookies_dict.get("JWT_WEB", "")
     print(f"  JWT_WEB: {'nalezen, zacina ' + jwt_web[:10] + '...' if jwt_web else 'CHYBI'}")
+
+    PROXY = "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities"
 
     base_headers = {
         "NK": "NT",
@@ -144,39 +153,48 @@ def fetch_activities(cookies_dict):
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
         "Referer": "https://connect.garmin.com/modern/activities",
+        "Origin": "https://connect.garmin.com",
     }
+    headers_bearer = {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None
+    headers_plain = base_headers
+    headers_no_nk = {k: v for k, v in base_headers.items() if k != "NK"}
 
-    # Try 3 strategies in order:
-    # 1. /proxy/ with Bearer token
-    # 2. connectapi.garmin.com with Bearer token (newer endpoint)
-    # 3. /proxy/ without Bearer (original)
-    strategies = [
-        (
-            "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
-            {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None,
-        ),
-        (
-            "https://connectapi.garmin.com/activitylist-service/activities/search/activities",
-            {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None,
-        ),
-        (
-            "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
-            base_headers,
-        ),
+    base_params = {"start": 0, "limit": 1}
+    params_with_user = {**base_params, "displayName": display_name} if display_name else None
+
+    # Try strategies in order — first one that returns data wins
+    strategies = []
+    if params_with_user:
+        strategies += [
+            (PROXY, params_with_user, headers_plain,  "cookies + displayName"),
+            (PROXY, params_with_user, headers_bearer, "Bearer + displayName") if headers_bearer else None,
+            (PROXY, params_with_user, headers_no_nk,  "no-NK + displayName"),
+        ]
+    strategies += [
+        (PROXY, base_params, headers_plain,  "cookies only"),
+        (PROXY, base_params, headers_bearer, "Bearer only") if headers_bearer else None,
+        (PROXY, base_params, headers_no_nk,  "no-NK"),
     ]
+    strategies = [s for s in strategies if s is not None]
 
-    for url, headers in strategies:
-        if headers is None:
-            continue
-        print(f"  Zkousim: {url} ({'s' if 'Authorization' in headers else 'bez'} Bearer)")
-        batch, raw = _try_fetch_page(url, {"start": 0, "limit": 1}, headers, cookies_dict)
+    url = PROXY
+    headers = headers_plain
+    for url, params, hdr, label in strategies:
+        print(f"  Zkousim [{label}]: {url}")
+        batch, raw = _try_fetch_page(url, params, hdr, cookies_dict)
         if batch:
-            print(f"  Funguje! Pouzivam tuto strategii.")
+            print(f"  Funguje! Pouzivam [{label}].")
+            headers = hdr
             break
-        print(f"  -> Prazdna odpoved: {raw[:100]}")
+        print(f"  -> {raw[:120]}")
     else:
-        print("CHYBA: Zadna strategie nefunguje. Viz vystup vyse.")
+        print("CHYBA: Zadna strategie nefunguje.")
+        print("Postup: otevri Firefox, jdi na connect.garmin.com/modern/activities,")
+        print("stiskni F12 -> Network -> filtr 'activitylist' -> zkopiruj URL a headers.")
         sys.exit(1)
+
+    # Build base params for the working strategy (keep displayName if it was part of it)
+    winning_extra = {k: v for k, v in params.items() if k not in ("start", "limit")}
 
     # Now fetch all pages with the working url/headers
     all_raw = []
@@ -185,7 +203,8 @@ def fetch_activities(cookies_dict):
 
     while True:
         print(f"  Stahuji aktivity {start}-{start + limit}...")
-        batch, raw = _try_fetch_page(url, {"start": start, "limit": limit}, headers, cookies_dict)
+        page_params = {"start": start, "limit": limit, **winning_extra}
+        batch, raw = _try_fetch_page(url, page_params, headers, cookies_dict)
         if not batch:
             print(f"  Prazdna odpoved: {raw[:100]}")
             break
