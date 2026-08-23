@@ -5,6 +5,15 @@ No login needed — uses cookies from your already-logged-in Firefox.
 Usage:
     python garmin_browser_export.py
 
+If cookies or CSRF token fail automatically, paste them from Firefox DevTools:
+  1. Open Firefox, go to connect.garmin.com/activities
+  2. Press F12 -> Network tab -> XHR filter
+  3. Reload the page (Ctrl+R)
+  4. Click the request "activities?limit=20&start=0"
+  5. In the "Požadavek" (Request) tab:
+       - Copy the Cookie header value -> paste into MANUAL_COOKIE_STRING below
+       - Copy the Connect-Csrf-Token value -> paste into MANUAL_CSRF_TOKEN below
+
 Then commit:
     git add garmin_archive.json
     git commit -m "Sync Garmin archive"
@@ -17,12 +26,18 @@ import shutil
 import sqlite3
 import sys
 import tempfile
-from datetime import date
 
 import requests
 
 CUTOFF = "2026-08-16"
 OUTPUT = "garmin_archive.json"
+
+# -----------------------------------------------------------------------
+# MANUAL OVERRIDE — paste from Firefox DevTools if automatic reading fails
+# Leave empty ("") to use automatic extraction
+# -----------------------------------------------------------------------
+MANUAL_COOKIE_STRING = ""
+MANUAL_CSRF_TOKEN = ""
 
 CATEGORY_MAP = {
     "cycling": "road",
@@ -43,40 +58,53 @@ CATEGORY_MAP = {
 }
 
 
-def find_firefox_cookies():
-    """Return path to Firefox cookies.sqlite (Windows/Mac/Linux)."""
+def find_firefox_profile():
+    """Return the Firefox default profile directory."""
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA", "")
         candidates = glob.glob(
-            os.path.join(appdata, "Mozilla", "Firefox", "Profiles", "*.default*", "cookies.sqlite")
+            os.path.join(appdata, "Mozilla", "Firefox", "Profiles", "*.default*")
         )
     elif sys.platform == "darwin":
         home = os.path.expanduser("~")
         candidates = glob.glob(
-            os.path.join(home, "Library", "Application Support", "Firefox", "Profiles", "*.default*", "cookies.sqlite")
+            os.path.join(home, "Library", "Application Support", "Firefox", "Profiles", "*.default*")
         )
     else:
         home = os.path.expanduser("~")
         candidates = glob.glob(
-            os.path.join(home, ".mozilla", "firefox", "*.default*", "cookies.sqlite")
+            os.path.join(home, ".mozilla", "firefox", "*.default*")
         )
     return candidates[0] if candidates else None
 
 
+def parse_cookie_string(s):
+    cookies = {}
+    for part in s.split(";"):
+        part = part.strip()
+        if "=" in part:
+            k, v = part.split("=", 1)
+            cookies[k.strip()] = v.strip()
+    return cookies
+
+
 def get_garmin_cookies():
-    """Read Garmin cookies from Firefox profile."""
-    path = find_firefox_cookies()
-    if not path:
+    if MANUAL_COOKIE_STRING.strip():
+        cookies = parse_cookie_string(MANUAL_COOKIE_STRING)
+        print(f"Pouzivam manualni Cookie string ({len(cookies)} polozek).")
+        return cookies
+
+    profile = find_firefox_profile()
+    if not profile:
         print("CHYBA: Firefox profil nenalezen.")
         sys.exit(1)
 
+    path = os.path.join(profile, "cookies.sqlite")
     print(f"Ctu cookies z: {path}")
 
-    # Firefox locks the file — copy it first
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
         shutil.copy2(path, tmp.name)
         tmp_path = tmp.name
-
     try:
         conn = sqlite3.connect(tmp_path)
         rows = conn.execute(
@@ -89,125 +117,176 @@ def get_garmin_cookies():
     print(f"Nalezeno {len(rows)} Garmin cookies.")
     if not rows:
         print("CHYBA: Zadne Garmin cookies.")
-        print("Jdi v Firefoxu na connect.garmin.com, prihlas se a zkus znovu.")
         sys.exit(1)
-    print(f"  Jmena cookies: {[name for name, value, host in rows]}")
-    # Return as simple dict — pass directly to requests to avoid domain-matching issues
     return {name: value for name, value, host in rows}
 
 
+def get_csrf_token(profile_dir):
+    """Try to read Connect-Csrf-Token from Firefox localStorage (webappsstore.sqlite)."""
+    if MANUAL_CSRF_TOKEN.strip():
+        return MANUAL_CSRF_TOKEN.strip()
+
+    if not profile_dir:
+        return None
+
+    path = os.path.join(profile_dir, "webappsstore.sqlite")
+    if not os.path.exists(path):
+        return None
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        shutil.copy2(path, tmp.name)
+        tmp_path = tmp.name
+    try:
+        conn = sqlite3.connect(tmp_path)
+        # scope is stored as REVERSED domain: "moc.nimrag" = "garmin.com"
+        rows = conn.execute(
+            "SELECT scope, key, value FROM webappsstore2 WHERE scope LIKE '%nimrag%'"
+        ).fetchall()
+        conn.close()
+        if rows:
+            print(f"  LocalStorage Garmin: {len(rows)} klicu")
+            for scope, key, value in rows:
+                if "csrf" in key.lower() or "xsrf" in key.lower() or "token" in key.lower():
+                    print(f"  Nalezen CSRF klic: {key} = {(value or '')[:60]}")
+                    return value
+            # Print first 20 keys for debugging
+            print(f"  LocalStorage klice: {[k for _,k,_ in rows[:20]]}")
+        return None
+    except Exception as e:
+        print(f"  LocalStorage read: {e}")
+        return None
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+
+
 def test_auth(cookies_dict):
-    """Quick auth test; returns display_name for use in activity queries."""
+    """Quick auth test; returns (display_name) or exits."""
     resp = requests.get(
         "https://connect.garmin.com/modern/currentuser-service/user/info",
         headers={"NK": "NT", "User-Agent": "Mozilla/5.0"},
         cookies=cookies_dict,
     )
-    print(f"Auth test -> HTTP {resp.status_code}, prvnich 200 znaku: {resp.text[:200]}")
+    print(f"Auth test -> HTTP {resp.status_code}")
     try:
         info = resp.json()
         display_name = info.get("username") or info.get("displayName") or ""
-        print(f"  displayName: {display_name}")
+        print(f"  Uzivatel: {display_name}")
         return display_name
     except Exception:
+        print(f"  Odpoved: {resp.text[:200]}")
         return ""
 
 
 def _try_fetch_page(url, params, headers, cookies_dict):
-    """Fetch one page; return (batch_list, raw_text) or sys.exit on error."""
-    resp = requests.get(url, params=params, headers=headers, cookies=cookies_dict)
-    if resp.status_code in (401, 403):
-        print("CHYBA: Session vyprsela nebo nejsi prihlaseny.")
-        sys.exit(1)
-    if resp.status_code != 200:
-        print(f"CHYBA: HTTP {resp.status_code}")
-        print(resp.text[:500])
-        sys.exit(1)
+    """Fetch one page; return (batch_list, raw_text, status_code)."""
+    try:
+        resp = requests.get(url, params=params, headers=headers, cookies=cookies_dict, timeout=20)
+    except Exception as e:
+        return None, str(e), 0
+    status = resp.status_code
+    if status not in (200, 404):
+        return None, resp.text[:200], status
     try:
         data = resp.json()
     except Exception:
-        print(f"  Odpoved neni JSON: {resp.text[:300]}")
-        return None, resp.text
+        return None, resp.text[:200], status
     if isinstance(data, list):
-        return data, resp.text
+        return data, resp.text, status
     if isinstance(data, dict):
         batch = data.get("activityList") or data.get("activities") or data.get("data") or []
         if not batch and data:
-            print(f"  JSON objekt s klici: {list(data.keys())}")
-        return batch, resp.text
-    return [], resp.text
+            keys = list(data.keys())
+            return [], f"dict keys: {keys}", status
+        return batch, resp.text, status
+    return [], resp.text, status
 
 
 def fetch_activities(cookies_dict):
     display_name = test_auth(cookies_dict)
+    profile = find_firefox_profile()
+    csrf_token = get_csrf_token(profile)
+    print(f"  CSRF token: {'nalezen (' + csrf_token[:12] + '...)' if csrf_token else 'NENALEZEN — zkousim bez nej'}")
 
     jwt_web = cookies_dict.get("JWT_WEB", "")
-    print(f"  JWT_WEB: {'nalezen, zacina ' + jwt_web[:10] + '...' if jwt_web else 'CHYBI'}")
 
-    base_headers = {
-        "NK": "NT",
-        "X-app-ver": "4.66.1.0",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:138.0) Gecko/20100101 Firefox/138.0",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": "https://connect.garmin.com/activities",
-        "Origin": "https://connect.garmin.com",
-    }
-    bearer_hdr = {**base_headers, "Authorization": f"Bearer {jwt_web}"} if jwt_web else None
+    def make_headers(with_csrf=True, with_bearer=False, with_nk=True):
+        h = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0",
+            "Accept": "*/*",
+            "Accept-Language": "cs,sk;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Referer": "https://connect.garmin.com/activities",
+            "Origin": "https://connect.garmin.com",
+        }
+        if with_nk:
+            h["NK"] = "NT"
+        if with_csrf and csrf_token:
+            h["Connect-Csrf-Token"] = csrf_token
+        if with_bearer and jwt_web:
+            h["Authorization"] = f"Bearer {jwt_web}"
+        return h
+
+    # The new Garmin Connect React app (v5.27+) uses /activities directly
+    # The old Backbone app used /proxy/activitylist-service/...
+    candidate_urls = [
+        "https://connect.garmin.com/activities",
+        "https://connect.garmin.com/api/proxy/activitylist-service/activities/search/activities",
+        "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
+    ]
 
     base_params = {"start": 0, "limit": 1}
     user_params = {**base_params, "displayName": display_name} if display_name else None
 
-    # Candidate URLs — the old /proxy/ path and the newer /api/proxy/ path used by the React app
-    candidate_urls = [
-        "https://connect.garmin.com/api/proxy/activitylist-service/activities/search/activities",
-        "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
-        "https://connect.garmin.com/api/proxy/activity-service/activities",
-        "https://connect.garmin.com/proxy/activity-service/activities",
-    ]
-
     strategies = []
     for cu in candidate_urls:
-        if user_params:
-            strategies.append((cu, user_params, base_headers, f"cookies+user {cu.split('garmin.com')[1][:40]}"))
-            if bearer_hdr:
-                strategies.append((cu, user_params, bearer_hdr, f"bearer+user {cu.split('garmin.com')[1][:40]}"))
-        strategies.append((cu, base_params, base_headers, f"cookies {cu.split('garmin.com')[1][:40]}"))
-        if bearer_hdr:
-            strategies.append((cu, base_params, bearer_hdr, f"bearer {cu.split('garmin.com')[1][:40]}"))
+        for hdr_label, hdr in [
+            ("csrf", make_headers(with_csrf=True)),
+            ("no-csrf", make_headers(with_csrf=False)),
+            ("bearer+csrf", make_headers(with_csrf=True, with_bearer=True)),
+        ]:
+            for pset, plabel in ([(user_params, "+user")] if user_params else []) + [(base_params, "")]:
+                strategies.append((cu, pset, hdr, f"{cu.split('garmin.com')[1][:30]} [{hdr_label}{plabel}]"))
 
-    url = candidate_urls[1]
-    headers = base_headers
+    url = candidate_urls[0]
+    headers = make_headers()
     params = base_params
     for url, params, hdr, label in strategies:
-        print(f"  Zkousim [{label}]")
-        batch, raw = _try_fetch_page(url, params, hdr, cookies_dict)
+        print(f"  Zkousim {label}")
+        batch, raw, status = _try_fetch_page(url, params, hdr, cookies_dict)
         if batch:
-            print(f"  Funguje! Pouzivam [{label}].")
+            print(f"  Funguje! Pouzivam.")
             headers = hdr
             break
-        print(f"  -> {raw[:80]}")
+        print(f"  -> HTTP {status}: {str(raw)[:80]}")
     else:
         print("\nCHYBA: Zadna strategie nefunguje.")
-        print("Otevri Firefox, jdi na connect.garmin.com/activities,")
-        print("F12 -> Network -> zalozka 'XHR' -> nacti stranku -> klikni na prvni")
-        print("request co vraci JSON s aktivitami -> zkopiruj URL a vloz sem.")
+        if not csrf_token:
+            print("Nejspis chybi CSRF token. Spus znovu s MANUAL_CSRF_TOKEN:")
+            print("  1. Firefox -> connect.garmin.com/activities")
+            print("  2. F12 -> Network -> XHR -> nacti stranku")
+            print('  3. Klikni na "activities?limit=20&start=0"')
+            print("  4. V Request headers zkopiruj hodnotu Connect-Csrf-Token")
+            print("  5. Vloz ji do MANUAL_CSRF_TOKEN na zacatku skriptu")
         sys.exit(1)
 
-    # Build base params for the working strategy (keep displayName if it was part of it)
+    # Fetch all pages with the working url/headers
     winning_extra = {k: v for k, v in params.items() if k not in ("start", "limit")}
 
-    # Now fetch all pages with the working url/headers
     all_raw = []
     start = 0
-    limit = 100
+    limit = 20  # match what the browser uses
 
     while True:
         print(f"  Stahuji aktivity {start}-{start + limit}...")
         page_params = {"start": start, "limit": limit, **winning_extra}
-        batch, raw = _try_fetch_page(url, page_params, headers, cookies_dict)
+        batch, raw, status = _try_fetch_page(url, page_params, headers, cookies_dict)
         if not batch:
-            print(f"  Prazdna odpoved: {raw[:100]}")
+            print(f"  Konec: {str(raw)[:80]}")
             break
         all_raw.extend(batch)
         oldest = (batch[-1].get("startTimeLocal") or "")[:10]
@@ -229,7 +308,7 @@ def map_activities(all_raw):
         if km == 0 and elev == 0:
             continue
         date_str = (a.get("startTimeLocal") or "")[:10]
-        if date_str < CUTOFF:
+        if not date_str or date_str < CUTOFF:
             continue
         moving = int(a.get("movingDuration") or a.get("duration") or 0)
         activities.append({
