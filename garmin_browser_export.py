@@ -91,11 +91,23 @@ def get_garmin_cookies():
         print("CHYBA: Zadne Garmin cookies.")
         print("Jdi v Firefoxu na connect.garmin.com, prihlas se a zkus znovu.")
         sys.exit(1)
+    print(f"  Jmena cookies: {[name for name, value, host in rows]}")
     # Return as simple dict — pass directly to requests to avoid domain-matching issues
     return {name: value for name, value, host in rows}
 
 
+def test_auth(cookies_dict):
+    """Quick auth test against a simple endpoint."""
+    resp = requests.get(
+        "https://connect.garmin.com/modern/currentuser-service/user/info",
+        headers={"NK": "NT", "User-Agent": "Mozilla/5.0"},
+        cookies=cookies_dict,
+    )
+    print(f"Auth test -> HTTP {resp.status_code}, prvnich 200 znaku: {resp.text[:200]}")
+
+
 def fetch_activities(cookies_dict):
+    test_auth(cookies_dict)
     headers = {
         "NK": "NT",
         "X-app-ver": "4.66.1.0",
