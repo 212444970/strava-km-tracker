@@ -70,6 +70,7 @@ def admin():
         "admin.html",
         garmin_connected=garmin_client.is_connected(),
         archive_count=len(strava_archive_store.load()),
+        garmin_archive_count=len(garmin_archive_store.load()),
     )
 
 
