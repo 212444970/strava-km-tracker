@@ -9,6 +9,7 @@ from flask import Flask, redirect, render_template, request, session, url_for, R
 
 import historical_store
 import strava_archive_store
+import garmin_archive_store
 import garmin_client
 import strava_client
 
@@ -32,8 +33,9 @@ def admin_required(f):
 def _load_all_activities():
     historical = historical_store.load()
     archived   = strava_archive_store.load()
+    garmin_arc = garmin_archive_store.load()
     garmin     = garmin_client.get_activities()
-    combined = historical + archived + garmin
+    combined = historical + archived + garmin_arc + garmin
     return sorted(combined, key=lambda x: x["date"], reverse=True)
 
 
