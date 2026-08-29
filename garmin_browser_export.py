@@ -282,13 +282,16 @@ def map_activities(all_raw):
         elev = round(a.get("elevationGain") or 0)
         if km == 0 and elev == 0:
             continue
-        date_str = (a.get("startTimeLocal") or "")[:10]
+        start_local = a.get("startTimeLocal") or ""
+        date_str = start_local[:10]
         if not date_str or date_str < CUTOFF:
             continue
+        time_str = start_local[11:16] if len(start_local) > 10 else ""
         moving = int(a.get("movingDuration") or a.get("duration") or 0)
         activities.append({
             "name": a.get("activityName") or sport,
             "date": date_str,
+            "time": time_str,
             "km": km,
             "elevation": elev,
             "moving_time": moving,

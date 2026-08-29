@@ -393,7 +393,7 @@ function renderRides(rides) {
   for (const r of recent) {
     const isHist=r.source==='historical';
     html+=`<tr${isHist?' class="hist-row"':''}>
-      <td class="date">${r.date.slice(8,10)}.${r.date.slice(5,7)}.${r.date.slice(0,4)}${isHist?' <span class="hist-badge">hist.</span>':''}</td>
+      <td class="date">${r.date.slice(8,10)}.${r.date.slice(5,7)}.${r.date.slice(0,4)}${r.time?' <span class="dim">'+r.time+'</span>':''}${isHist?' <span class="hist-badge">hist.</span>':''}</td>
       <td>${esc(r.name)}</td><td class="type">${esc(r.type)}</td>
       <td class="num">${r.km>0?r.km+' km':'–'}</td>
       <td class="num">${r.moving_time>0?fmtDur(r.moving_time):'–'}</td>
