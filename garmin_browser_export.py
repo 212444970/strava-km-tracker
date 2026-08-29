@@ -65,28 +65,6 @@ CATEGORY_MAP = {
 }
 
 
-def find_firefox_profile():
-    """Return the Firefox profile directory with the most recent cookies.sqlite."""
-    if sys.platform == "win32":
-        appdata = os.environ.get("APPDATA", "")
-        base = os.path.join(appdata, "Mozilla", "Firefox", "Profiles")
-        candidates = glob.glob(os.path.join(base, "*.default*"))
-    elif sys.platform == "darwin":
-        home = os.path.expanduser("~")
-        candidates = glob.glob(
-            os.path.join(home, "Library", "Application Support", "Firefox", "Profiles", "*.default*")
-        )
-    else:
-        home = os.path.expanduser("~")
-        candidates = glob.glob(os.path.join(home, ".mozilla", "firefox", "*.default*"))
-
-    # Prefer the profile with the largest (most-used) cookies.sqlite
-    with_cookies = [c for c in candidates if os.path.exists(os.path.join(c, "cookies.sqlite"))]
-    if not with_cookies:
-        return candidates[0] if candidates else None
-    return max(with_cookies, key=lambda p: os.path.getsize(os.path.join(p, "cookies.sqlite")))
-
-
 def parse_cookie_string(s):
     cookies = {}
     for part in s.split(";"):
@@ -95,13 +73,11 @@ def parse_cookie_string(s):
             continue
         k, v = part.split("=", 1)
         k, v = k.strip(), v.strip()
-        # Drop cookies whose values can't be sent as HTTP headers (latin-1 only)
-        # DevTools truncates long values with '…' — skip those cookies entirely
         try:
             v.encode("latin-1")
             cookies[k] = v
         except (UnicodeEncodeError, UnicodeDecodeError):
-            pass  # skip truncated/non-latin-1 cookies (e.g. CONSENTMGR with '…')
+            pass
     return cookies
 
 
@@ -111,18 +87,39 @@ def get_garmin_cookies():
         print(f"Pouzivam manualni Cookie string ({len(cookies)} polozek).")
         return cookies
 
-    profile = find_firefox_profile()
+    # Try Chrome via browser-cookie3 (handles DPAPI decryption on Windows automatically)
+    try:
+        import browser_cookie3
+        jar = browser_cookie3.chrome(domain_name=".garmin.com")
+        cookies = {c.name: c.value for c in jar}
+        if cookies:
+            print(f"Nacteno {len(cookies)} Garmin cookies z Chrome.")
+            return cookies
+        print("Chrome: zadne Garmin cookies (nejste prihlaseni v Chrome?).")
+    except Exception as e:
+        print(f"Chrome nacitani selhalo: {e}")
+
+    # Fallback: Firefox via SQLite
+    try:
+        if sys.platform == "win32":
+            base = os.path.join(os.environ.get("APPDATA", ""), "Mozilla", "Firefox", "Profiles")
+        elif sys.platform == "darwin":
+            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Firefox", "Profiles")
+        else:
+            base = os.path.join(os.path.expanduser("~"), ".mozilla", "firefox")
+        candidates = glob.glob(os.path.join(base, "*.default*"))
+        with_cookies = [c for c in candidates if os.path.exists(os.path.join(c, "cookies.sqlite"))]
+        profile = max(with_cookies, key=lambda p: os.path.getsize(os.path.join(p, "cookies.sqlite"))) if with_cookies else None
+    except Exception:
+        profile = None
+
     if not profile:
-        print("CHYBA: Firefox profil nenalezen.")
+        print("CHYBA: Ani Chrome ani Firefox cookies nenalezeny.")
+        print("Nainstalujte browser-cookie3 (pip install browser-cookie3) a prihlaste se v Chrome.")
         sys.exit(1)
 
     path = os.path.join(profile, "cookies.sqlite")
-    if not os.path.exists(path):
-        print(f"CHYBA: cookies.sqlite nenalezeno v {profile}")
-        sys.exit(1)
-    print(f"Ctu cookies z: {path}")
-
-    # On Windows, NamedTemporaryFile keeps the file open — use a plain temp path instead
+    print(f"Ctu cookies z Firefox: {path}")
     tmp_path = path + ".tmp_export"
     try:
         shutil.copy2(path, tmp_path)
@@ -137,9 +134,9 @@ def get_garmin_cookies():
         except OSError:
             pass
 
-    print(f"Nalezeno {len(rows)} Garmin cookies.")
+    print(f"Nalezeno {len(rows)} Garmin Firefox cookies.")
     if not rows:
-        print("CHYBA: Zadne Garmin cookies.")
+        print("CHYBA: Zadne Garmin cookies v Firefox.")
         sys.exit(1)
     return {name: value for name, value, host in rows}
 
@@ -235,8 +232,7 @@ def _try_fetch_page(url, params, headers, cookies_dict):
 
 def fetch_activities(cookies_dict):
     display_name = test_auth(cookies_dict)
-    profile = find_firefox_profile()
-    csrf_token = get_csrf_token(profile)
+    csrf_token = get_csrf_token(None)  # reads MANUAL_CSRF_TOKEN or Firefox localStorage
     print(f"  CSRF token: {'nalezen (' + csrf_token[:12] + '...)' if csrf_token else 'NENALEZEN — zkousim bez nej'}")
 
     # Diagnostika — klic auth cookies
