@@ -226,7 +226,7 @@ def fetch_activities(cookies_dict):
 
     jwt_web = cookies_dict.get("JWT_WEB", "")
 
-    def make_headers(with_csrf=True, with_bearer=False, with_nk=True):
+    def make_headers(with_csrf=True):
         h = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0",
             "Accept": "*/*",
@@ -234,37 +234,24 @@ def fetch_activities(cookies_dict):
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "Referer": "https://connect.garmin.com/activities",
-            "Origin": "https://connect.garmin.com",
         }
-        if with_nk:
-            h["NK"] = "NT"
         if with_csrf and csrf_token:
             h["Connect-Csrf-Token"] = csrf_token
-        if with_bearer and jwt_web:
-            h["Authorization"] = f"Bearer {jwt_web}"
         return h
 
-    # The new Garmin Connect React app (v5.27+) uses /activities directly
-    # The old Backbone app used /proxy/activitylist-service/...
+    # Garmin Connect React app (v5.27+) uses /gc-api/ prefix
     candidate_urls = [
-        "https://connect.garmin.com/activities",
-        "https://connect.garmin.com/api/proxy/activitylist-service/activities/search/activities",
+        "https://connect.garmin.com/gc-api/activitylist-service/activities/search/activities",
         "https://connect.garmin.com/proxy/activitylist-service/activities/search/activities",
+        "https://connect.garmin.com/api/proxy/activitylist-service/activities/search/activities",
     ]
 
     base_params = {"start": 0, "limit": 1}
-    user_params = {**base_params, "displayName": display_name} if display_name else None
 
     strategies = []
     for cu in candidate_urls:
-        for hdr_label, hdr in [
-            ("csrf", make_headers(with_csrf=True)),
-            ("no-csrf", make_headers(with_csrf=False)),
-            ("bearer+csrf", make_headers(with_csrf=True, with_bearer=True)),
-        ]:
-            for pset, plabel in ([(user_params, "+user")] if user_params else []) + [(base_params, "")]:
-                strategies.append((cu, pset, hdr, f"{cu.split('garmin.com')[1][:30]} [{hdr_label}{plabel}]"))
+        for hdr_label, hdr in [("csrf", make_headers(True)), ("no-csrf", make_headers(False))]:
+            strategies.append((cu, base_params, hdr, f"{cu.split('garmin.com')[1][:35]} [{hdr_label}]"))
 
     url = candidate_urls[0]
     headers = make_headers()
