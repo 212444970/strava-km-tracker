@@ -224,6 +224,11 @@ def fetch_activities(cookies_dict):
     csrf_token = get_csrf_token(profile)
     print(f"  CSRF token: {'nalezen (' + csrf_token[:12] + '...)' if csrf_token else 'NENALEZEN — zkousim bez nej'}")
 
+    # Diagnostika — klic auth cookies
+    for key in ["JWT_WEB", "SESSIONID", "GARMIN-SSO-CUST-GUID", "session", "__cflb"]:
+        val = cookies_dict.get(key, "")
+        print(f"  Cookie {key}: {'OK (' + val[:16] + '...)' if val else 'CHYBI'}")
+
     jwt_web = cookies_dict.get("JWT_WEB", "")
 
     def make_headers(with_csrf=True):
@@ -258,12 +263,33 @@ def fetch_activities(cookies_dict):
     params = base_params
     for url, params, hdr, label in strategies:
         print(f"  Zkousim {label}")
-        batch, raw, status = _try_fetch_page(url, params, hdr, cookies_dict)
-        if batch:
+        try:
+            resp = requests.get(url, params=params, headers=hdr, cookies=cookies_dict, timeout=20)
+            ct = resp.headers.get("Content-Type", "?")
+            print(f"  -> HTTP {resp.status_code} | Content-Type: {ct[:60]}")
+            if resp.status_code not in (200, 404):
+                print(f"     Telo: {resp.text[:120]}")
+                continue
+            try:
+                data = resp.json()
+            except Exception:
+                print(f"     Neni JSON — zrejme HTML nebo redirect. Telo: {resp.text[:120]}")
+                continue
+            if isinstance(data, list) and data:
+                batch = data
+            elif isinstance(data, dict):
+                batch = data.get("activityList") or data.get("activities") or data.get("data") or []
+                if not batch:
+                    print(f"     JSON dict, klice: {list(data.keys())[:10]}")
+                    continue
+            else:
+                print(f"     Prazdna odpoved: {data}")
+                continue
             print(f"  Funguje! Pouzivam.")
             headers = hdr
             break
-        print(f"  -> HTTP {status}: {str(raw)[:80]}")
+        except Exception as e:
+            print(f"  -> Chyba: {e}")
     else:
         print("\nCHYBA: Zadna strategie nefunguje.")
         if not csrf_token:
