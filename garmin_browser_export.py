@@ -82,10 +82,7 @@ def parse_cookie_string(s):
 
 
 def get_garmin_cookies():
-    if MANUAL_COOKIE_STRING.strip():
-        cookies = parse_cookie_string(MANUAL_COOKIE_STRING)
-        print(f"Pouzivam manualni Cookie string ({len(cookies)} polozek).")
-        return cookies
+    cookies = {}
 
     # Try Chrome via browser-cookie3 (handles DPAPI decryption on Windows automatically)
     try:
@@ -94,8 +91,6 @@ def get_garmin_cookies():
         cookies = {c.name: c.value for c in jar}
         if cookies:
             print(f"Nacteno {len(cookies)} Garmin cookies z Chrome.")
-            return cookies
-        print("Chrome: zadne Garmin cookies (nejste prihlaseni v Chrome?).")
     except Exception as e:
         print(f"Chrome nacitani selhalo: {e}")
 
@@ -113,32 +108,38 @@ def get_garmin_cookies():
     except Exception:
         profile = None
 
-    if not profile:
-        print("CHYBA: Ani Chrome ani Firefox cookies nenalezeny.")
-        print("Nainstalujte browser-cookie3 (pip install browser-cookie3) a prihlaste se v Chrome.")
-        sys.exit(1)
-
-    path = os.path.join(profile, "cookies.sqlite")
-    print(f"Ctu cookies z Firefox: {path}")
-    tmp_path = path + ".tmp_export"
-    try:
-        shutil.copy2(path, tmp_path)
-        conn = sqlite3.connect(tmp_path)
-        rows = conn.execute(
-            "SELECT name, value, host FROM moz_cookies WHERE host LIKE '%garmin%'"
-        ).fetchall()
-        conn.close()
-    finally:
+    if not cookies and profile:
+        path = os.path.join(profile, "cookies.sqlite")
+        print(f"Ctu cookies z Firefox: {path}")
+        tmp_path = path + ".tmp_export"
         try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
+            shutil.copy2(path, tmp_path)
+            conn = sqlite3.connect(tmp_path)
+            rows = conn.execute(
+                "SELECT name, value, host FROM moz_cookies WHERE host LIKE '%garmin%'"
+            ).fetchall()
+            conn.close()
+            cookies = {name: value for name, value, host in rows}
+            print(f"Nalezeno {len(cookies)} Garmin Firefox cookies.")
+        except Exception as e:
+            print(f"Firefox nacitani selhalo: {e}")
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
 
-    print(f"Nalezeno {len(rows)} Garmin Firefox cookies.")
-    if not rows:
-        print("CHYBA: Zadne Garmin cookies v Firefox.")
+    if not cookies:
+        print("CHYBA: Zadne Garmin cookies nalezeny v Chrome ani Firefox.")
         sys.exit(1)
-    return {name: value for name, value, host in rows}
+
+    # MANUAL_COOKIE_STRING doplnuje automaticky nactene cookies (session-only cookies jako SESSIONID)
+    if MANUAL_COOKIE_STRING.strip():
+        extra = parse_cookie_string(MANUAL_COOKIE_STRING)
+        cookies.update(extra)
+        print(f"Pridan manual override: {list(extra.keys())}")
+
+    return cookies
 
 
 def get_csrf_token(profile_dir):
