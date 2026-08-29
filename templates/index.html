@@ -47,7 +47,7 @@
 </section>
 
 <section class="rides-section">
-  <h2>Posledních 5 aktivit</h2>
+  <h2>Posledních 20 aktivit</h2>
   <div id="rides-table"></div>
 </section>
 
@@ -387,7 +387,7 @@ function renderInsights(ins, allTimeKm, allTimeDur, rr) {
 
 function renderRides(rides) {
   const el=document.getElementById('rides-table');
-  const recent=rides.slice(0,5);
+  const recent=rides.slice(0,20);
   if (!recent.length) { el.innerHTML='<p class="empty">Žádné aktivity.</p>'; return; }
   let html=`<table><thead><tr><th>Datum</th><th>Název</th><th>Typ</th><th>Vzdálenost</th><th>Čas</th><th>Převýšení</th></tr></thead><tbody>`;
   for (const r of recent) {
