@@ -19,6 +19,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 PORT = int(os.environ.get("PORT", 5000))
 APP_URL = os.environ.get("APP_URL", f"http://localhost:{PORT}")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+DATA_SOURCE = os.environ.get("DATA_SOURCE", "mixed").lower()  # "mixed" or "strava"
 
 
 def admin_required(f):
@@ -31,6 +32,10 @@ def admin_required(f):
 
 
 def _load_all_activities():
+    if DATA_SOURCE == "strava":
+        activities = strava_client.get_activities() or []
+        return activities
+
     historical = historical_store.load()
     archived   = strava_archive_store.load()
     garmin_arc = garmin_archive_store.load()
@@ -41,6 +46,17 @@ def _load_all_activities():
 
 @app.route("/")
 def index():
+    if DATA_SOURCE == "strava":
+        activities = _load_all_activities()
+        if activities is None:
+            return render_template("index.html", connected=False)
+        return render_template(
+            "index.html",
+            connected=True,
+            activities=activities,
+            category_labels=strava_client.CATEGORY_LABELS,
+        )
+
     if not garmin_client.is_connected() and not strava_archive_store.load() and not historical_store.load():
         return render_template("index.html", connected=False)
     activities = _load_all_activities()
