@@ -27,7 +27,14 @@ import sqlite3
 import sys
 import tempfile
 
-import requests
+try:
+    from curl_cffi import requests
+    _IMPERSONATE = "firefox136"
+    print("Pouzivam curl_cffi (Firefox impersonation).")
+except ImportError:
+    import requests
+    _IMPERSONATE = None
+    print("curl_cffi neni nainstalovano — pouzivam requests (muze selhat na 401).")
 
 CUTOFF = "2026-08-16"
 OUTPUT = "garmin_archive.json"
@@ -178,10 +185,15 @@ def get_csrf_token(profile_dir):
 
 def test_auth(cookies_dict):
     """Quick auth test; returns (display_name) or exits."""
-    resp = requests.get(
-        "https://connect.garmin.com/modern/currentuser-service/user/info",
+    kwargs = dict(
         headers={"NK": "NT", "User-Agent": "Mozilla/5.0"},
         cookies=cookies_dict,
+    )
+    if _IMPERSONATE:
+        kwargs["impersonate"] = _IMPERSONATE
+    resp = requests.get(
+        "https://connect.garmin.com/modern/currentuser-service/user/info",
+        **kwargs,
     )
     print(f"Auth test -> HTTP {resp.status_code}")
     try:
@@ -197,7 +209,10 @@ def test_auth(cookies_dict):
 def _try_fetch_page(url, params, headers, cookies_dict):
     """Fetch one page; return (batch_list, raw_text, status_code)."""
     try:
-        resp = requests.get(url, params=params, headers=headers, cookies=cookies_dict, timeout=20)
+        kwargs = dict(params=params, headers=headers, cookies=cookies_dict, timeout=20)
+        if _IMPERSONATE:
+            kwargs["impersonate"] = _IMPERSONATE
+        resp = requests.get(url, **kwargs)
     except Exception as e:
         return None, str(e), 0
     status = resp.status_code
@@ -264,7 +279,10 @@ def fetch_activities(cookies_dict):
     for url, params, hdr, label in strategies:
         print(f"  Zkousim {label}")
         try:
-            resp = requests.get(url, params=params, headers=hdr, cookies=cookies_dict, timeout=20)
+            kw = dict(params=params, headers=hdr, cookies=cookies_dict, timeout=20)
+            if _IMPERSONATE:
+                kw["impersonate"] = _IMPERSONATE
+            resp = requests.get(url, **kw)
             ct = resp.headers.get("Content-Type", "?")
             print(f"  -> HTTP {resp.status_code} | Content-Type: {ct[:60]}")
             if resp.status_code not in (200, 404):
