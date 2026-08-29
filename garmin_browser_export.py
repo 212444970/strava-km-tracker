@@ -59,12 +59,11 @@ CATEGORY_MAP = {
 
 
 def find_firefox_profile():
-    """Return the Firefox default profile directory."""
+    """Return the Firefox profile directory with the most recent cookies.sqlite."""
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA", "")
-        candidates = glob.glob(
-            os.path.join(appdata, "Mozilla", "Firefox", "Profiles", "*.default*")
-        )
+        base = os.path.join(appdata, "Mozilla", "Firefox", "Profiles")
+        candidates = glob.glob(os.path.join(base, "*.default*"))
     elif sys.platform == "darwin":
         home = os.path.expanduser("~")
         candidates = glob.glob(
@@ -72,10 +71,13 @@ def find_firefox_profile():
         )
     else:
         home = os.path.expanduser("~")
-        candidates = glob.glob(
-            os.path.join(home, ".mozilla", "firefox", "*.default*")
-        )
-    return candidates[0] if candidates else None
+        candidates = glob.glob(os.path.join(home, ".mozilla", "firefox", "*.default*"))
+
+    # Prefer the profile with the largest (most-used) cookies.sqlite
+    with_cookies = [c for c in candidates if os.path.exists(os.path.join(c, "cookies.sqlite"))]
+    if not with_cookies:
+        return candidates[0] if candidates else None
+    return max(with_cookies, key=lambda p: os.path.getsize(os.path.join(p, "cookies.sqlite")))
 
 
 def parse_cookie_string(s):
@@ -100,19 +102,25 @@ def get_garmin_cookies():
         sys.exit(1)
 
     path = os.path.join(profile, "cookies.sqlite")
+    if not os.path.exists(path):
+        print(f"CHYBA: cookies.sqlite nenalezeno v {profile}")
+        sys.exit(1)
     print(f"Ctu cookies z: {path}")
 
-    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
-        shutil.copy2(path, tmp.name)
-        tmp_path = tmp.name
+    # On Windows, NamedTemporaryFile keeps the file open — use a plain temp path instead
+    tmp_path = path + ".tmp_export"
     try:
+        shutil.copy2(path, tmp_path)
         conn = sqlite3.connect(tmp_path)
         rows = conn.execute(
             "SELECT name, value, host FROM moz_cookies WHERE host LIKE '%garmin%'"
         ).fetchall()
         conn.close()
     finally:
-        os.unlink(tmp_path)
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
     print(f"Nalezeno {len(rows)} Garmin cookies.")
     if not rows:
@@ -133,10 +141,9 @@ def get_csrf_token(profile_dir):
     if not os.path.exists(path):
         return None
 
-    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
-        shutil.copy2(path, tmp.name)
-        tmp_path = tmp.name
+    tmp_path = path + ".tmp_export"
     try:
+        shutil.copy2(path, tmp_path)
         conn = sqlite3.connect(tmp_path)
         # scope is stored as REVERSED domain: "moc.nimrag" = "garmin.com"
         rows = conn.execute(
@@ -149,8 +156,7 @@ def get_csrf_token(profile_dir):
                 if "csrf" in key.lower() or "xsrf" in key.lower() or "token" in key.lower():
                     print(f"  Nalezen CSRF klic: {key} = {(value or '')[:60]}")
                     return value
-            # Print first 20 keys for debugging
-            print(f"  LocalStorage klice: {[k for _,k,_ in rows[:20]]}")
+            print(f"  LocalStorage klice: {[k for _, k, _ in rows[:20]]}")
         return None
     except Exception as e:
         print(f"  LocalStorage read: {e}")
@@ -158,7 +164,7 @@ def get_csrf_token(profile_dir):
     finally:
         try:
             os.unlink(tmp_path)
-        except Exception:
+        except OSError:
             pass
 
 
