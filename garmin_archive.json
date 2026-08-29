@@ -5,8 +5,8 @@
     "km": 27.86,
     "elevation": 97,
     "moving_time": 7485,
-    "type": "gravel_cycling",
-    "category": "road",
+    "type": "mountain_biking",
+    "category": "mtb",
     "source": "garmin"
   },
   {
@@ -15,8 +15,8 @@
     "km": 39.3,
     "elevation": 176,
     "moving_time": 10769,
-    "type": "gravel_cycling",
-    "category": "road",
+    "type": "mountain_biking",
+    "category": "mtb",
     "source": "garmin"
   },
   {
@@ -105,8 +105,8 @@
     "km": 29.06,
     "elevation": 111,
     "moving_time": 6800,
-    "type": "gravel_cycling",
-    "category": "road",
+    "type": "mountain_biking",
+    "category": "mtb",
     "source": "garmin"
   }
 ]
