@@ -29,8 +29,8 @@ import tempfile
 
 try:
     from curl_cffi import requests
-    _IMPERSONATE = "firefox136"
-    print("Pouzivam curl_cffi (Firefox impersonation).")
+    _IMPERSONATE = "chrome131"
+    print(f"Pouzivam curl_cffi (impersonate={_IMPERSONATE}).")
 except ImportError:
     import requests
     _IMPERSONATE = None
