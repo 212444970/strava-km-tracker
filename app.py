@@ -32,10 +32,6 @@ def admin_required(f):
 
 
 def _load_all_activities():
-    if DATA_SOURCE == "strava":
-        activities = strava_client.get_activities() or []
-        return activities
-
     historical = historical_store.load()
     archived   = strava_archive_store.load()
     garmin_arc = garmin_archive_store.load()
@@ -47,9 +43,11 @@ def _load_all_activities():
 @app.route("/")
 def index():
     if DATA_SOURCE == "strava":
-        activities = _load_all_activities()
-        if activities is None:
+        strava = strava_client.get_activities()
+        if strava is None:
             return render_template("index.html", connected=False)
+        historical = historical_store.load()
+        activities = sorted(historical + strava, key=lambda x: x["date"], reverse=True)
         return render_template(
             "index.html",
             connected=True,
