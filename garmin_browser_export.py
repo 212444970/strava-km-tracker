@@ -19,13 +19,9 @@ Then commit:
     git commit -m "Sync Garmin archive"
     git push
 """
-import glob
 import json
 import os
-import shutil
-import sqlite3
 import sys
-import tempfile
 
 try:
     from curl_cffi import requests
@@ -82,103 +78,37 @@ def parse_cookie_string(s):
 
 
 def get_garmin_cookies():
+    """Load Garmin cookies from Chrome (via browser-cookie3) + MANUAL_COOKIE_STRING override."""
     cookies = {}
 
-    # Try Chrome via browser-cookie3 (handles DPAPI decryption on Windows automatically)
     try:
         import browser_cookie3
         jar = browser_cookie3.chrome(domain_name=".garmin.com")
         cookies = {c.name: c.value for c in jar}
         if cookies:
             print(f"Nacteno {len(cookies)} Garmin cookies z Chrome.")
+        else:
+            print("Chrome: zadne Garmin cookies — prihlaste se na connect.garmin.com v Chrome.")
     except Exception as e:
         print(f"Chrome nacitani selhalo: {e}")
+        print("Nainstalujte: pip install browser-cookie3")
 
-    # Fallback: Firefox via SQLite
-    try:
-        if sys.platform == "win32":
-            base = os.path.join(os.environ.get("APPDATA", ""), "Mozilla", "Firefox", "Profiles")
-        elif sys.platform == "darwin":
-            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Firefox", "Profiles")
-        else:
-            base = os.path.join(os.path.expanduser("~"), ".mozilla", "firefox")
-        candidates = glob.glob(os.path.join(base, "*.default*"))
-        with_cookies = [c for c in candidates if os.path.exists(os.path.join(c, "cookies.sqlite"))]
-        profile = max(with_cookies, key=lambda p: os.path.getsize(os.path.join(p, "cookies.sqlite"))) if with_cookies else None
-    except Exception:
-        profile = None
-
-    if not cookies and profile:
-        path = os.path.join(profile, "cookies.sqlite")
-        print(f"Ctu cookies z Firefox: {path}")
-        tmp_path = path + ".tmp_export"
-        try:
-            shutil.copy2(path, tmp_path)
-            conn = sqlite3.connect(tmp_path)
-            rows = conn.execute(
-                "SELECT name, value, host FROM moz_cookies WHERE host LIKE '%garmin%'"
-            ).fetchall()
-            conn.close()
-            cookies = {name: value for name, value, host in rows}
-            print(f"Nalezeno {len(cookies)} Garmin Firefox cookies.")
-        except Exception as e:
-            print(f"Firefox nacitani selhalo: {e}")
-        finally:
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-
-    if not cookies:
-        print("CHYBA: Zadne Garmin cookies nalezeny v Chrome ani Firefox.")
-        sys.exit(1)
-
-    # MANUAL_COOKIE_STRING doplnuje automaticky nactene cookies (session-only cookies jako SESSIONID)
+    # MANUAL_COOKIE_STRING doplnuje Chrome cookies (session-only cookies jako SESSIONID)
     if MANUAL_COOKIE_STRING.strip():
         extra = parse_cookie_string(MANUAL_COOKIE_STRING)
         cookies.update(extra)
-        print(f"Pridan manual override: {list(extra.keys())}")
+        print(f"Manual override pridan: {list(extra.keys())}")
+
+    if not cookies:
+        print("CHYBA: Zadne Garmin cookies. Prihlaste se v Chrome a zkuste znovu.")
+        sys.exit(1)
 
     return cookies
 
 
-def get_csrf_token(profile_dir):
-    """Try to read Connect-Csrf-Token from Firefox localStorage (webappsstore.sqlite)."""
-    if MANUAL_CSRF_TOKEN.strip():
-        return MANUAL_CSRF_TOKEN.strip()
-
-    if not profile_dir:
-        return None
-
-    path = os.path.join(profile_dir, "webappsstore.sqlite")
-    if not os.path.exists(path):
-        return None
-
-    tmp_path = path + ".tmp_export"
-    try:
-        shutil.copy2(path, tmp_path)
-        conn = sqlite3.connect(tmp_path)
-        # scope is stored as REVERSED domain: "moc.nimrag" = "garmin.com"
-        rows = conn.execute(
-            "SELECT scope, key, value FROM webappsstore2 WHERE scope LIKE '%nimrag%'"
-        ).fetchall()
-        conn.close()
-        if rows:
-            print(f"  LocalStorage Garmin: {len(rows)} klicu")
-            for scope, key, value in rows:
-                if "csrf" in key.lower() or "xsrf" in key.lower() or "token" in key.lower():
-                    print(f"  Nalezen CSRF klic: {key} = {(value or '')[:60]}")
-                    return value
-            print(f"  LocalStorage klice: {[k for _, k, _ in rows[:20]]}")
-        return None
-    except Exception as e:
-        print(f"  LocalStorage read: {e}")
-        return None
-    finally:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
+def get_csrf_token():
+    """Returns MANUAL_CSRF_TOKEN (must be set manually from Chrome DevTools)."""
+    return MANUAL_CSRF_TOKEN.strip() or None
 
 
 def test_auth(cookies_dict):
@@ -233,7 +163,7 @@ def _try_fetch_page(url, params, headers, cookies_dict):
 
 def fetch_activities(cookies_dict):
     display_name = test_auth(cookies_dict)
-    csrf_token = get_csrf_token(None)  # reads MANUAL_CSRF_TOKEN or Firefox localStorage
+    csrf_token = get_csrf_token()
     print(f"  CSRF token: {'nalezen (' + csrf_token[:12] + '...)' if csrf_token else 'NENALEZEN — zkousim bez nej'}")
 
     # Diagnostika — klic auth cookies
@@ -245,9 +175,12 @@ def fetch_activities(cookies_dict):
 
     def make_headers(with_csrf=True):
         h = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
             "Accept": "*/*",
             "Accept-Language": "cs,sk;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
