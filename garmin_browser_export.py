@@ -84,9 +84,17 @@ def parse_cookie_string(s):
     cookies = {}
     for part in s.split(";"):
         part = part.strip()
-        if "=" in part:
-            k, v = part.split("=", 1)
-            cookies[k.strip()] = v.strip()
+        if "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        k, v = k.strip(), v.strip()
+        # Drop cookies whose values can't be sent as HTTP headers (latin-1 only)
+        # DevTools truncates long values with '…' — skip those cookies entirely
+        try:
+            v.encode("latin-1")
+            cookies[k] = v
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass  # skip truncated/non-latin-1 cookies (e.g. CONSENTMGR with '…')
     return cookies
 
 
