@@ -5,10 +5,10 @@ import logging
 log = logging.getLogger(__name__)
 
 try:
-    import garth
-    _GARTH_AVAILABLE = True
+    from garminconnect import Garmin
+    _GARMIN_AVAILABLE = True
 except ImportError:
-    _GARTH_AVAILABLE = False
+    _GARMIN_AVAILABLE = False
 
 _DATA_DIR = os.environ.get("DATA_DIR", os.path.dirname(os.path.abspath(__file__)))
 
@@ -46,14 +46,26 @@ CATEGORY_LABELS = {
 
 _cache = {"activities": None, "fetched_at": 0}
 CACHE_TTL = 300
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is not None:
+        return _client
+    if not _GARMIN_AVAILABLE:
+        return None
+    try:
+        client = Garmin()
+        client.login(_DATA_DIR)
+        _client = client
+        return client
+    except Exception:
+        return None
 
 
 def _resume():
-    try:
-        garth.resume(_DATA_DIR)
-        return True
-    except Exception:
-        return False
+    return _get_client() is not None
 
 
 def _map_activity(a):
@@ -78,12 +90,11 @@ def _map_activity(a):
 
 def get_activities(force=False):
     global _cache
-    if not _GARTH_AVAILABLE:
-        return []
     if not force and _cache["activities"] is not None:
         if time.time() - _cache["fetched_at"] < CACHE_TTL:
             return _cache["activities"]
-    if not _resume():
+    client = _get_client()
+    if client is None:
         return []
     try:
         from datetime import date
@@ -92,7 +103,7 @@ def get_activities(force=False):
         start = 0
         limit = 100
         while True:
-            batch = garth.connectapi(
+            batch = client.connectapi(
                 "/activitylist-service/activities/search/activities",
                 params={
                     "startDate": GARMIN_CUTOFF,
@@ -121,44 +132,17 @@ def clear_cache():
     _cache = {"activities": None, "fetched_at": 0}
 
 
-def login(email, password):
-    """
-    Returns:
-      'ok'            — success
-      'mfa'           — MFA code required
-      ('error', msg)  — failed with reason string
-    """
-    if not _GARTH_AVAILABLE:
-        return ("error", "Knihovna garth není nainstalovaná.")
-    try:
-        garth.login(email, password)
-        os.makedirs(_DATA_DIR, exist_ok=True)
-        garth.save(_DATA_DIR)
-        clear_cache()
-        return "ok"
-    except Exception as e:
-        msg = str(e)
-        if "MFA" in msg or "OTP" in msg or "NEED" in msg:
-            return "mfa"
-        return ("error", msg)
-
-
-def login_mfa(otp_code):
-    """Returns 'ok' or ('error', msg)."""
-    return ("error", "MFA login není podporován na serveru. Použij upload tokenů z lokálního přihlášení.")
+def reset_client():
+    global _client
+    _client = None
+    clear_cache()
 
 
 def is_connected():
-    if not _GARTH_AVAILABLE:
-        return False
     return _resume()
 
 
 def disconnect():
-    global _cache
-    for fname in ("oauth1_token.json", "oauth2_token.json", "garmin_session.json"):
-        try:
-            os.remove(os.path.join(_DATA_DIR, fname))
-        except FileNotFoundError:
-            pass
-    clear_cache()
+    if _GARMIN_AVAILABLE:
+        Garmin().logout(_DATA_DIR)
+    reset_client()

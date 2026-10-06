@@ -88,43 +88,6 @@ def admin():
     )
 
 
-@app.route("/admin/garmin-login", methods=["POST"])
-@admin_required
-def admin_garmin_login():
-    email    = request.form.get("email", "").strip()
-    password = request.form.get("password", "").strip()
-    result = garmin_client.login(email, password)
-    if result == "ok":
-        return redirect(url_for("admin"))
-    if result == "mfa":
-        return render_template("admin.html",
-                               garmin_connected=False,
-                               archive_count=len(strava_archive_store.load()),
-                               garmin_archive_count=len(garmin_archive_store.load()),
-                               needs_mfa=True)
-    _, msg = result
-    return render_template("admin.html",
-                           garmin_connected=False,
-                           archive_count=len(strava_archive_store.load()),
-                           garmin_archive_count=len(garmin_archive_store.load()),
-                           garmin_error=msg)
-
-
-@app.route("/admin/garmin-mfa", methods=["POST"])
-@admin_required
-def admin_garmin_mfa():
-    code = request.form.get("code", "").strip()
-    result = garmin_client.login_mfa(code)
-    if result == "ok":
-        return redirect(url_for("admin"))
-    _, msg = result
-    return render_template("admin.html",
-                           garmin_connected=False,
-                           archive_count=len(strava_archive_store.load()),
-                           garmin_archive_count=len(garmin_archive_store.load()),
-                           garmin_error=msg)
-
-
 @app.route("/admin/garmin-disconnect", methods=["POST"])
 @admin_required
 def admin_garmin_disconnect():
@@ -152,17 +115,13 @@ def admin_upload_garmin_tokens():
         return "Neplatný JSON soubor.", 400
     data_dir = os.environ.get("DATA_DIR", os.path.dirname(os.path.abspath(__file__)))
     os.makedirs(data_dir, exist_ok=True)
-    saved = []
-    for fname, content in export.items():
-        if not fname.endswith(".json"):
-            continue
-        path = os.path.join(data_dir, fname)
-        with open(path, "w", encoding="utf-8") as out:
-            json.dump(content, out)
-        saved.append(fname)
-    if not saved:
+    tokens = export.get("garmin_tokens.json") if isinstance(export, dict) else None
+    if not isinstance(tokens, dict) or not tokens.get("di_token") or not tokens.get("di_refresh_token"):
         return "Soubor neobsahuje žádné tokeny.", 400
-    garmin_client.clear_cache()
+    path = os.path.join(data_dir, "garmin_tokens.json")
+    with open(path, "w", encoding="utf-8") as out:
+        json.dump(tokens, out)
+    garmin_client.reset_client()
     return redirect(url_for("admin"))
 
 
