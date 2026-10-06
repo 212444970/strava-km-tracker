@@ -1,7 +1,9 @@
 import os
+import logging
 import webbrowser
 from functools import wraps
 
+import requests
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,6 +22,7 @@ PORT = int(os.environ.get("PORT", 5000))
 APP_URL = os.environ.get("APP_URL", f"http://localhost:{PORT}")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 DATA_SOURCE = os.environ.get("DATA_SOURCE", "mixed").lower()  # "mixed" or "strava"
+log = logging.getLogger(__name__)
 
 
 def admin_required(f):
@@ -43,10 +46,14 @@ def _load_all_activities():
 @app.route("/")
 def index():
     if DATA_SOURCE == "strava":
-        strava = strava_client.get_activities()
+        historical = historical_store.load()
+        try:
+            strava = strava_client.get_activities()
+        except requests.RequestException:
+            log.exception("Failed to fetch Strava activities; showing historical data only")
+            strava = []
         if strava is None:
             return render_template("index.html", connected=False)
-        historical = historical_store.load()
         activities = sorted(historical + strava, key=lambda x: x["date"], reverse=True)
         return render_template(
             "index.html",
