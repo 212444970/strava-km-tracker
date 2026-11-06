@@ -41,8 +41,28 @@ def _load_all_activities():
         for activity in strava_archive_store.load()
         if activity["date"] < strava_archive_store.GARMIN_CUTOFF
     ]
-    garmin_arc = garmin_archive_store.load()
-    garmin     = garmin_client.get_activities()
+    garmin = garmin_client.get_activities()
+    live_garmin_keys = {
+        (
+            activity.get("date"),
+            activity.get("name"),
+            activity.get("km"),
+            activity.get("type"),
+            activity.get("moving_time"),
+        )
+        for activity in garmin
+    }
+    garmin_arc = [
+        activity
+        for activity in garmin_archive_store.load()
+        if (
+            activity.get("date"),
+            activity.get("name"),
+            activity.get("km"),
+            activity.get("type"),
+            activity.get("moving_time"),
+        ) not in live_garmin_keys
+    ]
     combined = historical + archived + garmin_arc + garmin
     return sorted(combined, key=lambda x: x["date"], reverse=True)
 
