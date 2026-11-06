@@ -36,7 +36,11 @@ def admin_required(f):
 
 def _load_all_activities():
     historical = historical_store.load()
-    archived   = strava_archive_store.load()
+    archived = [
+        activity
+        for activity in strava_archive_store.load()
+        if activity["date"] < strava_archive_store.GARMIN_CUTOFF
+    ]
     garmin_arc = garmin_archive_store.load()
     garmin     = garmin_client.get_activities()
     combined = historical + archived + garmin_arc + garmin
